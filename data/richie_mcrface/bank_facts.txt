@@ -1,0 +1,3 @@
+deposits: $1.6M
+loans: $20M
+wealth: $0.5M

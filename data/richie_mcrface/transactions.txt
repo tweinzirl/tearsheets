@@ -1,0 +1,5 @@
+This table shows incoming and outgoing transactions.  Negative amounts are outgoing. Positive amounts are incoming.
+Amount Recipient_or_Sender
+-5 Starbucks coffee
+-100 Transfer to Bob
+200 Incoming direct deposit
