@@ -1,0 +1,29 @@
+Account_Key,Client_key,Product_Family,Account_Type,Balance,Monthly_Average_Balance
+# richie mcrface
+1,1234,deposit,checking,3450.23,45.12
+2,1234,deposit,savings,13987.23,123980
+3,1234,loan,multi-family-residential,1230000,
+4,1234,loan,multi-family-residential,4560000,
+5,1234,wealth,brokerage,93450.23,
+# robbie barker
+6,2345,deposit,checking,15740,14145.12
+7,2345,loan,multi-family-residential,9870000,
+8,2345,wealth,brokerage,67899.23,
+# sum yung gai
+9,3456,deposit,checking,1234,1230.12
+10,3456,deposit,savings,2000.,1789
+# frankie columbo
+11,4567,deposit,checking,54321.,54200
+12,4567,deposit,savings,123987.,123000
+13,4567,loan,multi-family-residential,8790000,
+14,4567,wealth,brokerage,99999,
+# arnie gov
+15,5678,deposit,checking,9993450.,9990000
+16,5678,deposit,savings,9913987.,9910000
+17,5678,loan,multi-family-residential,5760000,
+18,5678,loan,multi-family-residential,897000,
+19,5678,wealth,brokerage,666666,
+# ira beback
+20,6789,deposit,checking,6432,6400
+21,6789,deposit,savings,68998,45.12
+22,5678,loan,single-family-residential,316000,
