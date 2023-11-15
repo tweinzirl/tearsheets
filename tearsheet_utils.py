@@ -109,6 +109,139 @@ def load_persona_html():
     return docs
 
 
+def tearsheet_bio(client, vectordb,
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+    '''
+    Build tearsheet bio for a given `client`.
+    '''
+
+    output1 = tearsheet_bio_1(client, vectordb, llm)  # separate q&a
+    output2 = tearsheet_bio_2(client, output1, llm)  # consolidate
+    output3 = tearsheet_bio_3(output2, llm)  # polish text
+    return output3
+
+
+def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+    all_docs = create_filter(client, 'all')
+
+    multi_doc_prompt_dict = {'1':
+              {'q': 'according to linkedin, what is the current position of {client}?',
+               'f': create_filter(client, 'linkedin'),
+              },
+
+         '2':
+             {'q': 'where did {client} work prior to the current position?',
+              'f': all_docs,
+             },
+
+         '3':
+             {'q': 'according to linkedin, relsci, and pitchbook, what boards did the {client} serve on? What roles did they have on those boards?',
+              'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
+             },
+
+         '4': {'q': 'what education credentials does {client} have',
+               'f': all_docs,
+              },
+
+         '5': {'q': 'describe the nature (industry, purpose) of the organization where {client} currently works',
+               'f': all_docs,
+              },
+
+         '6': {'q': 'describe the philantropic activies of {client}',
+               'f': all_docs,
+              },
+
+         '7': {'q': 'describe the family of {client}',
+               'f': all_docs,
+              },
+
+         '8': {'q': 'describe any deals where the {client} was a lead partner',
+               'f': create_filter(client, 'pitchbook'),
+              },
+
+          #TODO: add question about recent news articles from google
+        }
+
+    # answer each question separately
+    for key in multi_doc_prompt_dict.keys():
+        q = multi_doc_prompt_dict[key]['q'].format(client=client)
+        f = multi_doc_prompt_dict[key]['f']
+        response = qa_metadata_filter(q, vectordb, f, llm=llm)
+        multi_doc_prompt_dict[key]['a'] = response
+
+    return multi_doc_prompt_dict
+
+
+def tearsheet_bio_2(client, qa_dict,
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+
+    '''
+    Given a client and a dictionary of Q&A responses, build a summary
+    paragraph that according to the prompt embedded in this function.
+    TODO: pass in the prompt as input.
+    '''
+
+    bio_prompt_template = '''
+        You are a writer and biographer. You specialize in writing
+        accurate life summarizes given large input documents.
+        Below is information from several documents about a single
+        client named {client}.
+
+        Prepare a biography that includes in the following order:
+        1. The client's name
+        2. Their professional work history, deals as lead partner
+        3. Board member activities
+        4. Philantropic activities
+        5. Their education
+        6. Any details about their family
+
+        Format the output as prose rather than an ordered list.
+        Use matter of fact statements and avoid phrases like "According to ..."
+        and "Unfortunately, there are no details about".
+
+        If there are no details on a particular topic, then completely omit
+        it from the response.
+
+        Input context:
+        {context}
+
+        Your response here:
+    '''
+
+    context = ''
+    for key in qa_dict:
+        context += ('\n\n' + qa_dict[key]['a'])
+
+    formatted_prompt = bio_prompt_template.format(client=client, context=context)
+
+    response = llm.call_as_llm(formatted_prompt)
+
+    return response
+
+
+def tearsheet_bio_3(proposed_bio,
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+
+    '''
+    Reformat the output into a single paragraph and adjust language as
+    specified in the input prompt.
+    '''
+
+    prompt = f'''Reformat the text below as a single paragraph, preserving order and details.\
+    Remove any sentences conveying missing details or insufficient information. Do not include sentences starting witih words like "Unfortunately".
+
+    ###
+    {proposed_bio}
+    ###
+
+    Your response here:
+    '''
+
+    response = llm.call_as_llm(prompt)
+
+    return response
+
+
 if __name__ == '__main__':
     import tearsheet_utils as m
     docs = m.load_persona_html()
@@ -142,3 +275,12 @@ if __name__ == '__main__':
     r3 = m.qa_metadata_filter(q3, vectordb, filter3)
     r4 = m.qa_metadata_filter(q4, vectordb, filter4)
 
+    # test tearsheet functions separately
+    output1 = m.tearsheet_bio_1('Robert King', vectordb)
+    output2 = m.tearsheet_bio_2('Robert King', output1)
+    output3 = m.tearsheet_bio_3(output2)
+
+    # test tearsheet bio
+    bio1 = m.tearsheet_bio('Zeus Manly', vectordb)
+    bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
+    bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
