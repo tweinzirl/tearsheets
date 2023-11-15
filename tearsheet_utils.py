@@ -113,6 +113,9 @@ def tearsheet_bio(client, vectordb,
     llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
     '''
     Build tearsheet bio for a given `client`.
+
+    TODO: decide which details currently in the bio are better placed
+    in a summary table.
     '''
 
     output1 = tearsheet_bio_1(client, vectordb, llm)  # separate q&a
@@ -125,7 +128,7 @@ def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo',
     all_docs = create_filter(client, 'all')
 
     multi_doc_prompt_dict = {'1':
-              {'q': 'according to linkedin, what is the current position of {client}?',
+              {'q': 'what is the current position of {client}?',
                'f': create_filter(client, 'linkedin'),
               },
 
@@ -135,7 +138,7 @@ def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo',
              },
 
          '3':
-             {'q': 'according to linkedin, relsci, and pitchbook, what boards did the {client} serve on? What roles did they have on those boards?',
+             {'q': 'what boards does the {client} currently serve on? What boards did they previously serve on?',
               'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
              },
 
@@ -151,7 +154,7 @@ def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo',
                'f': all_docs,
               },
 
-         '7': {'q': 'describe the family of {client}',
+         '7': {'q': 'compare the net worth of {client} to that of their family',
                'f': all_docs,
               },
 
@@ -159,7 +162,17 @@ def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo',
                'f': create_filter(client, 'pitchbook'),
               },
 
-          #TODO: add question about recent news articles from google
+         '9': {'q': 'summarize the investment bio of {client}. Include the amounts of stock and options sold in the last 36 months.',
+               'f': create_filter(client, ['equilar', 'pitchbook']),  # applying doc filter here gets more specific and response
+              },
+
+         '10': {'q': 'what stock did {client} sell and when were the effective dates?',
+               'f': create_filter(client, 'equilar'),
+              },
+
+         '11': {'q': 'summarize recent news articles about {client}',
+               'f': create_filter(client, 'google'),  # doc filter also makes difference here
+              },
         }
 
     # answer each question separately
@@ -188,12 +201,14 @@ def tearsheet_bio_2(client, qa_dict,
         client named {client}.
 
         Prepare a biography that includes in the following order:
-        1. The client's name
-        2. Their professional work history, deals as lead partner
-        3. Board member activities
-        4. Philantropic activities
-        5. Their education
-        6. Any details about their family
+        1. The client's name and estimated individual net worth
+        2. Family net worth
+        3. Their professional work history, deals as lead partner
+        4. Summary of their investment activities and any recent stock or option sales
+        5. Board member activities
+        6. Philantropic activities
+        7. Their education
+        8. Recent news articles about the client
 
         Format the output as prose rather than an ordered list.
         Use matter of fact statements and avoid phrases like "According to ..."
