@@ -124,6 +124,98 @@ def tearsheet_bio(client, vectordb,
     return output3
 
 
+def tearsheet_table(client, vectordb,
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+    '''
+    Build summary table for a given `client`.
+    '''
+
+    output1 = tearsheet_table_1(client, vectordb, llm)  # separate q&a
+    return output1
+
+
+def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+    all_docs = create_filter(client, 'all')
+
+    #birthday
+    #new client date
+
+    # todo: change keys from number str to text descriptions for easier retrieeval
+
+    multi_doc_prompt_dict = {'title':
+              {'q': 'what is the current job title of {client}? Answer with just the job title.',
+               'f': create_filter(client, 'linkedin'),
+              },
+
+         'location':
+             {'q': 'what is the location of {client}? Answer with just the city and state (e.g., city, state).',
+              'f': all_docs,
+             },
+
+         'net_worth': {'q': 'what is the individual and family net worth of {client}? Answer with a pipe-delimited list, e.g., individual net worth | family net worth',
+               'f': all_docs,
+              },
+
+         'prior positions':
+             {'q': '''What prior positions were held by {client}? Answer with a pipe-delimited list, e.g.,\
+                    Position @ Company 1 | Position2 @ Company 2
+                   ''',
+              'f': all_docs,
+             },
+
+         'education':
+             {'q': '''What education credentials does {client} have? Answer with a pipe-delimited list, e.g.,\
+                    Degree 1 (School 1) | Degree 2 (School 2)
+                   ''',
+              'f': all_docs,
+             },
+
+         'boards':
+             {'q': '''What boards or committees does the {client} currently serve on? Answer with a pipe-delimited list, e.g.,\
+                   Board 1 | Board 2
+                   ''',
+              'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
+             },
+
+         'prior_boards':
+             {'q': '''What boards did {client} previously serve on?  Answer with a pipe-delimited list, e.g.,\
+                   Board 1 | Board 2
+                   ''',
+              'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
+             },
+
+         'deals': {'q': '''Itemize any deals where the {client} was a lead partner. Answer with a pipe-delimited list, e.g.,\
+                   Deal 1 | Deal 2
+                  ''',
+               'f': create_filter(client, 'pitchbook'),
+              },
+
+         'stock': {'q': '''Itemize the the equity transactions in the last 36 months for {client}. Answer with a pipe-delimited list list, e.g., \
+               Stock sold: amount | Options exercised: amount | New equity grants: amount
+               ''',
+               'f': create_filter(client, 'equilar'),
+              },
+
+         'news': {'q': '''Itemize news articles about {client}, including title and date. Answer with a pipe-delimited list, e.g.,\
+               Title 1 (date 1) | Title 2 (date 2)
+               ''',
+               'f': create_filter(client, 'google'),  # doc filter also makes difference here
+              },
+        }
+
+
+    # answer each question separately
+    for key in multi_doc_prompt_dict.keys():
+        q = multi_doc_prompt_dict[key]['q'].format(client=client)
+        f = multi_doc_prompt_dict[key]['f']
+        response = qa_metadata_filter(q, vectordb, f, llm=llm)
+        multi_doc_prompt_dict[key]['a'] = response
+
+    return multi_doc_prompt_dict
+
+
+
+
 def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
     all_docs = create_filter(client, 'all')
 
@@ -154,7 +246,7 @@ def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo',
                'f': all_docs,
               },
 
-         '7': {'q': 'compare the net worth of {client} to that of their family',
+         '7': {'q': 'what is the net worth of {client} and their family',
                'f': all_docs,
               },
 
@@ -290,7 +382,7 @@ if __name__ == '__main__':
     r3 = m.qa_metadata_filter(q3, vectordb, filter3)
     r4 = m.qa_metadata_filter(q4, vectordb, filter4)
 
-    # test tearsheet functions separately
+    # test tearsheet bio functions separately
     output1 = m.tearsheet_bio_1('Robert King', vectordb)
     output2 = m.tearsheet_bio_2('Robert King', output1)
     output3 = m.tearsheet_bio_3(output2)
@@ -299,3 +391,7 @@ if __name__ == '__main__':
     bio1 = m.tearsheet_bio('Zeus Manly', vectordb)
     bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
     bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
+
+    # test tearsheet table functions separately
+    output1 = m.tearsheet_table_1('Robert King', vectordb)
+
