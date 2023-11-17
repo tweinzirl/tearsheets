@@ -142,67 +142,73 @@ def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo
 
     # todo: change keys from number str to text descriptions for easier retrieeval
 
-    multi_doc_prompt_dict = {'title':
-              {'q': 'what is the current job title of {client}? Answer with just the job title.',
-               'f': create_filter(client, 'linkedin'),
-              },
+    multi_doc_prompt_dict = {
+      'title':
+          {'q': 'what is the current job title of {client}? Answer with just the job title.',
+           'f': create_filter(client, 'linkedin'),
+           },
 
-         'location':
-             {'q': 'what is the location of {client}? Answer with just the city and state (e.g., city, state).',
-              'f': all_docs,
-             },
+      'employer':
+          {'q': 'what is the employer of {client}? Answer with just the employer name.',
+           'f': create_filter(client, 'linkedin'),
+           },
 
-         'net_worth': {'q': 'what is the individual and family net worth of {client}? Answer with a pipe-delimited list, e.g., individual net worth | family net worth',
-               'f': all_docs,
-              },
 
-         'prior positions':
-             {'q': '''What prior positions were held by {client}? Answer with a pipe-delimited list, e.g.,\
-                    Position @ Company 1 | Position2 @ Company 2
-                   ''',
-              'f': all_docs,
-             },
+     'location':
+         {'q': 'what is the location of {client}? Answer with just the city and state (e.g., city, state).',
+          'f': all_docs,
+          },
 
-         'education':
-             {'q': '''What education credentials does {client} have? Answer with a pipe-delimited list, e.g.,\
-                    Degree 1 (School 1) | Degree 2 (School 2)
-                   ''',
-              'f': all_docs,
-             },
+     'net_worth': {'q': 'what is the individual and family net worth of {client}? Answer with a pipe-delimited list, e.g., individual net worth | family net worth',
+           'f': all_docs,
+           },
 
-         'boards':
-             {'q': '''What boards or committees does the {client} currently serve on? Answer with a pipe-delimited list, e.g.,\
-                   Board 1 | Board 2
-                   ''',
-              'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
-             },
-
-         'prior_boards':
-             {'q': '''What boards did {client} previously serve on?  Answer with a pipe-delimited list, e.g.,\
-                   Board 1 | Board 2
-                   ''',
-              'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
-             },
-
-         'deals': {'q': '''Itemize any deals where the {client} was a lead partner. Answer with a pipe-delimited list, e.g.,\
-                   Deal 1 | Deal 2
-                  ''',
-               'f': create_filter(client, 'pitchbook'),
-              },
-
-         'stock': {'q': '''Itemize the the equity transactions in the last 36 months for {client}. Answer with a pipe-delimited list list, e.g., \
-               Stock sold: amount | Options exercised: amount | New equity grants: amount
+     'prior positions':
+         {'q': '''What prior positions were held by {client}? Answer with a pipe-delimited list, e.g.,\
+                Position @ Company 1 | Position2 @ Company 2
                ''',
-               'f': create_filter(client, 'equilar'),
-              },
+          'f': all_docs,
+          },
 
-         'news': {'q': '''Itemize news articles about {client}, including title and date. Answer with a pipe-delimited list, e.g.,\
-               Title 1 (date 1) | Title 2 (date 2)
+     'education':
+         {'q': '''What education credentials does {client} have? Answer with a pipe-delimited list, e.g.,\
+                Degree 1 (School 1) | Degree 2 (School 2)
                ''',
-               'f': create_filter(client, 'google'),  # doc filter also makes difference here
-              },
+          'f': all_docs,
+          },
+
+     'boards':
+         {'q': '''What boards or committees does the {client} currently serve on? Answer with a pipe-delimited list, e.g.,\
+               Board 1 | Board 2
+               ''',
+          'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
+          },
+
+     'prior_boards':
+         {'q': '''What boards did {client} previously serve on?  Answer with a pipe-delimited list, e.g.,\
+               Board 1 | Board 2
+               ''',
+          'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
+          },
+
+     'deals': {'q': '''Itemize any deals where the {client} was a lead partner. Answer with a pipe-delimited list, e.g.,\
+               Deal 1 | Deal 2
+              ''',
+           'f': create_filter(client, 'pitchbook'),
+           },
+
+     'stock': {'q': '''Itemize the the equity transactions in the last 36 months for {client}. Answer with a pipe-delimited list list, e.g., \
+           Stock sold: amount | Options exercised: amount | New equity grants: amount
+           ''',
+           'f': create_filter(client, 'equilar'),
+           },
+
+     'news': {'q': '''Itemize news articles about {client}, including title and date. Answer with a pipe-delimited list, e.g.,\
+           Title 1 (date 1) | Title 2 (date 2)
+           ''',
+           'f': create_filter(client, 'google'),  # doc filter also makes difference here
+           },
         }
-
 
     # answer each question separately
     for key in multi_doc_prompt_dict.keys():
@@ -212,8 +218,6 @@ def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo
         multi_doc_prompt_dict[key]['a'] = response
 
     return multi_doc_prompt_dict
-
-
 
 
 def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
@@ -349,6 +353,98 @@ def tearsheet_bio_3(proposed_bio,
     return response
 
 
+def generate_tearsheet(client, vectordb):
+    '''
+    Given client and vectorstore, generate tearsheet components and write.
+    '''
+
+    bio = tearsheet_bio(client, vectordb)
+    table = tearsheet_table(client, vectordb)
+    html, output_path = write_to_html(client, bio, table)
+
+    return html, output_path
+
+
+def write_to_html(client, bio, table):
+    '''
+    Write tearsheet data to html template
+    '''    
+    # output path
+    output_path = f'data/tearsheets/tearsheet_{client.replace(" ", "_")}.html'
+
+    # read template
+    with open('data/tearsheets/template.html', 'r') as fin:
+        template = fin.read()
+
+    # format template
+    html = format_template(template, bio, table, client=client, banker='XXX',
+        client_type='Client')
+
+    with open(output_path, 'w') as fout:
+        fout.write(html)
+
+    return html, output_path
+
+
+def format_template(template, bio, table, client='client', banker='banker',
+    client_type='Client'):
+    '''
+    Format tearsheet template.
+    '''
+
+    employer = table['employer']['a']
+
+    formatted_table = f'''
+    <table class="center">
+      <tr>
+        <td><b>Title:</b> </td>
+        <td>{table["title"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Location:</b> </td>
+        <td>{table["location"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Net Worth:</b> </td>
+        <td>{table["net_worth"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Prior Positions:</b> </td>
+        <td>{table["prior positions"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>education:</b> </td>
+        <td>{table["education"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Current Boards:</b> </td>
+        <td>{table["boards"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Previous Boards:</b> </td>
+        <td>{table["prior_boards"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Pitchbook Deals:</b> </td>
+        <td>{table["deals"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b>Stock Transactions:</b> </td>
+        <td>{table["stock"]["a"]}</td>
+      </tr>
+      <tr>
+        <td><b> Recent News:</b> </td>
+        <td>{table["news"]["a"]}</td>
+      </tr>
+    </table>
+    '''
+
+    template = template.format(bio=bio, client=client, banker=banker,
+        client_type=client_type, employer=employer, table=formatted_table)
+
+    return template
+
+
 if __name__ == '__main__':
     import tearsheet_utils as m
     docs = m.load_persona_html()
@@ -388,10 +484,18 @@ if __name__ == '__main__':
     output3 = m.tearsheet_bio_3(output2)
 
     # test tearsheet bio
-    bio1 = m.tearsheet_bio('Zeus Manly', vectordb)
+    bio1 = m.tearsheet_bio('Robert King', vectordb)
     bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
     bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
 
     # test tearsheet table functions separately
-    output1 = m.tearsheet_table_1('Robert King', vectordb)
+    table1 = m.tearsheet_table('Robert King', vectordb)
+    table2 = m.tearsheet_table('Velvet Throat', vectordb)
+    table3 = m.tearsheet_table('Julia Harpman', vectordb)
 
+    # write tearsheet
+    #html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
+    html, output_path = m.write_to_html('Robert King', bio1, table1)
+    html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
+    #html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
+    html, output_path = m.write_to_html('Julia Harpman', bio3, table3)
