@@ -327,7 +327,8 @@ def tearsheet_bio_2(client, qa_dict,
     '''
     Given a client and a dictionary of Q&A responses, build a summary
     paragraph that according to the prompt embedded in this function.
-    TODO: pass in the prompt as input.
+
+    TODO: generate bulleted list dynamically based on keys in the input qa_dict. this will prevent statement conveying no information.
     '''
 
     bio_prompt_template = '''
