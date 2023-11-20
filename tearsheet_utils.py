@@ -10,6 +10,7 @@ from langchain.document_loaders import UnstructuredHTMLLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
 from langchain.chains import RetrievalQA
 
 # authentication
@@ -58,6 +59,36 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
     result = qa_chain({"query": q})
 
     return result['result']
+
+
+def llm_chat(msgs=None, human_msg=None, system_msg=None,
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+    '''
+    Chat with specified LLM. Upload list of chat messages (`msgs`) or separately
+    provide human message (`human_msg`) and optional system message (`system_msg`).
+    '''
+
+    if human_msg:
+        msgs = []
+        if system_msg:
+            msgs.append(SystemMessage(content=system_msg))
+        msgs.append(HumanMessage(content=human_msg))
+
+    return llm(msgs).content
+
+
+def test_response_relevance(answer):
+    '''
+    Utility function to check the relevance to an answer provided by an LLM.
+    '''
+
+    system_msg = '''
+        Examine the following answer to a question provided by an AI. Return \
+        "No" only if the answer is along the lines of "information not available", \
+        "I don\'t know", "I cannot answer". Otherwise return "Yes".
+        '''
+
+    return llm_chat(human_msg=answer, system_msg=system_msg)
 
 
 def create_filter(client_name='all', doc_types='all', logical_operator='$and'):
@@ -159,7 +190,7 @@ def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo
           'f': all_docs,
           },
 
-     'net_worth': {'q': 'what is the individual and family net worth of {client}? Answer with a pipe-delimited list, e.g., individual net worth | family net worth',
+     'net worth': {'q': 'what is the individual and family net worth of {client}? Answer with a pipe-delimited list, e.g., individual net worth | family net worth',
            'f': all_docs,
            },
 
@@ -177,33 +208,33 @@ def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo
           'f': all_docs,
           },
 
-     'boards':
+     'current boards':
          {'q': '''What boards or committees does the {client} currently serve on? Answer with a pipe-delimited list, e.g.,\
                Board 1 | Board 2
                ''',
           'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
           },
 
-     'prior_boards':
+     'previous boards':
          {'q': '''What boards did {client} previously serve on?  Answer with a pipe-delimited list, e.g.,\
                Board 1 | Board 2
                ''',
           'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
           },
 
-     'deals': {'q': '''Itemize any deals where the {client} was a lead partner. Answer with a pipe-delimited list, e.g.,\
+     'pitchbook deals': {'q': '''Itemize any deals where the {client} was a lead partner. Answer with a pipe-delimited list, e.g.,\
                Deal 1 | Deal 2
               ''',
            'f': create_filter(client, 'pitchbook'),
            },
 
-     'stock': {'q': '''Itemize the the equity transactions in the last 36 months for {client}. Answer with a pipe-delimited list list, e.g., \
+     'stock transactions': {'q': '''Itemize the the equity transactions in the last 36 months for {client}. Answer with a pipe-delimited list list, e.g., \
            Stock sold: amount | Options exercised: amount | New equity grants: amount
            ''',
            'f': create_filter(client, 'equilar'),
            },
 
-     'news': {'q': '''Itemize news articles about {client}, including title and date. Answer with a pipe-delimited list, e.g.,\
+     'recent news': {'q': '''Itemize news articles about {client}, including title and date. Answer with a pipe-delimited list, e.g.,\
            Title 1 (date 1) | Title 2 (date 2)
            ''',
            'f': create_filter(client, 'google'),  # doc filter also makes difference here
@@ -212,19 +243,24 @@ def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo
 
     # answer each question separately
     for key in multi_doc_prompt_dict.keys():
-        q = multi_doc_prompt_dict[key]['q'].format(client=client)
-        f = multi_doc_prompt_dict[key]['f']
-        response = qa_metadata_filter(q, vectordb, f, llm=llm)
+        q = multi_doc_prompt_dict[key]['q'].format(client=client)  # question
+        f = multi_doc_prompt_dict[key]['f']  # filter
+        response = qa_metadata_filter(q, vectordb, f, llm=llm)  # response
         multi_doc_prompt_dict[key]['a'] = response
 
-    return multi_doc_prompt_dict
+        #quality check
+        multi_doc_prompt_dict[key]['check'] = test_response_relevance(f'{q} {response}')
+
+    filtered_dict = {key:value for key, value in multi_doc_prompt_dict.items() if value['check'].lower()=='yes'}  # require check == yes
+
+    return filtered_dict
 
 
 def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
     all_docs = create_filter(client, 'all')
 
     multi_doc_prompt_dict = {'1':
-              {'q': 'what is the current position of {client}?',
+              {'q': 'what is the job title of {client} at their employer?',
                'f': create_filter(client, 'linkedin'),
               },
 
@@ -273,12 +309,16 @@ def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo',
 
     # answer each question separately
     for key in multi_doc_prompt_dict.keys():
-        q = multi_doc_prompt_dict[key]['q'].format(client=client)
-        f = multi_doc_prompt_dict[key]['f']
-        response = qa_metadata_filter(q, vectordb, f, llm=llm)
+        q = multi_doc_prompt_dict[key]['q'].format(client=client)  # question
+        f = multi_doc_prompt_dict[key]['f']  # filter
+        response = qa_metadata_filter(q, vectordb, f, llm=llm)  # response
         multi_doc_prompt_dict[key]['a'] = response
 
-    return multi_doc_prompt_dict
+        multi_doc_prompt_dict[key]['check'] = test_response_relevance(f'{q} {response}')  # check quality of response
+
+    filtered_dict = {key:value for key, value in multi_doc_prompt_dict.items() if value['check'].lower()=='yes'}  # require check == yes
+
+    return filtered_dict
 
 
 def tearsheet_bio_2(client, qa_dict,
@@ -309,9 +349,6 @@ def tearsheet_bio_2(client, qa_dict,
         Format the output as prose rather than an ordered list.
         Use matter of fact statements and avoid phrases like "According to ..."
         and "Unfortunately, there are no details about".
-
-        If there are no details on a particular topic, then completely omit
-        it from the response.
 
         Input context:
         {context}
@@ -394,50 +431,17 @@ def format_template(template, bio, table, client='client', banker='banker',
 
     employer = table['employer']['a']
 
-    formatted_table = f'''
-    <table class="center">
-      <tr>
-        <td><b>Title:</b> </td>
-        <td>{table["title"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Location:</b> </td>
-        <td>{table["location"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Net Worth:</b> </td>
-        <td>{table["net_worth"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Prior Positions:</b> </td>
-        <td>{table["prior positions"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>education:</b> </td>
-        <td>{table["education"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Current Boards:</b> </td>
-        <td>{table["boards"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Previous Boards:</b> </td>
-        <td>{table["prior_boards"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Pitchbook Deals:</b> </td>
-        <td>{table["deals"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b>Stock Transactions:</b> </td>
-        <td>{table["stock"]["a"]}</td>
-      </tr>
-      <tr>
-        <td><b> Recent News:</b> </td>
-        <td>{table["news"]["a"]}</td>
-      </tr>
-    </table>
-    '''
+    formatted_table = '<table class="center">'  # table start
+
+    for key, value in table.items():
+        formatted_table += f'''
+        <tr>
+          <td><b>{key.capitalize()}:</b> </td>
+          <td>{value["a"]}</td>
+        </tr>
+        '''
+
+    formatted_table += '</table>'  # table end
 
     template = template.format(bio=bio, client=client, banker=banker,
         client_type=client_type, employer=employer, table=formatted_table)
@@ -479,8 +483,8 @@ if __name__ == '__main__':
     r4 = m.qa_metadata_filter(q4, vectordb, filter4)
 
     # test tearsheet bio functions separately
-    output1 = m.tearsheet_bio_1('Robert King', vectordb)
-    output2 = m.tearsheet_bio_2('Robert King', output1)
+    output1 = m.tearsheet_bio_1('Julia Harpman', vectordb)
+    output2 = m.tearsheet_bio_2('Julia Harpman', output1)
     output3 = m.tearsheet_bio_3(output2)
 
     # test tearsheet bio
