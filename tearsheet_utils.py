@@ -259,50 +259,49 @@ def tearsheet_table_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo
 def tearsheet_bio_1(client, vectordb, llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
     all_docs = create_filter(client, 'all')
 
-    multi_doc_prompt_dict = {'1':
-              {'q': 'what is the job title of {client} at their employer?',
+    multi_doc_prompt_dict = {
+         'current job title': {'q': 'what is the job title of {client} at their employer?',
                'f': create_filter(client, 'linkedin'),
               },
 
-         '2':
-             {'q': 'where did {client} work prior to the current position?',
+         'work industry': {'q': 'describe the nature (industry, purpose) of the organization where {client} currently works',
+               'f': all_docs,
+              },
+
+         'prior work history': {'q': 'where did {client} work prior to the current position?',
               'f': all_docs,
              },
 
-         '3':
-             {'q': 'what boards does the {client} currently serve on? What boards did they previously serve on?',
+         'board memberships': {'q': 'what boards does the {client} currently serve on? What boards did they previously serve on?',
               'f': create_filter(client, ['linkedin', 'relsci', 'pitchbook']),
              },
 
-         '4': {'q': 'what education credentials does {client} have',
+         'philantropic activities': {'q': 'describe the philantropic activies of {client}',
                'f': all_docs,
               },
 
-         '5': {'q': 'describe the nature (industry, purpose) of the organization where {client} currently works',
-               'f': all_docs,
-              },
-
-         '6': {'q': 'describe the philantropic activies of {client}',
-               'f': all_docs,
-              },
-
-         '7': {'q': 'what is the net worth of {client} and their family',
-               'f': all_docs,
-              },
-
-         '8': {'q': 'describe any deals where the {client} was a lead partner',
+         'deals as lead partner': {'q': 'describe any deals where the {client} was a lead partner',
                'f': create_filter(client, 'pitchbook'),
               },
 
-         '9': {'q': 'summarize the investment bio of {client}. Include the amounts of stock and options sold in the last 36 months.',
+         'investment bio': {'q': 'summarize the investment bio of {client}. Include the amounts of stock and options sold in the last 36 months.',
                'f': create_filter(client, ['equilar', 'pitchbook']),  # applying doc filter here gets more specific and response
               },
 
-         '10': {'q': 'what stock did {client} sell and when were the effective dates?',
+         'stocks sold': {'q': 'what stock did {client} sell and when were the effective dates?',
                'f': create_filter(client, 'equilar'),
               },
 
-         '11': {'q': 'summarize recent news articles about {client}',
+         'net worth': {'q': 'what is the net worth of {client} and their family',
+               'f': all_docs,
+              },
+
+         'education': {'q': 'what education credentials does {client} have',
+
+               'f': all_docs,
+              },
+
+         'recent news': {'q': 'summarize recent news articles about {client}',
                'f': create_filter(client, 'google'),  # doc filter also makes difference here
               },
         }
@@ -334,20 +333,12 @@ def tearsheet_bio_2(client, qa_dict,
     bio_prompt_template = '''
         You are a writer and biographer. You specialize in writing
         accurate life summarizes given large input documents.
-        Below is information from several documents about a single
+        Below is information on several topics about a single
         client named {client}.
 
-        Prepare a biography that includes in the following order:
-        1. The client's name and estimated individual net worth
-        2. Family net worth
-        3. Their professional work history, deals as lead partner
-        4. Summary of their investment activities and any recent stock or option sales
-        5. Board member activities
-        6. Philantropic activities
-        7. Their education
-        8. Recent news articles about the client
+        The context is arranged in the format "topic: information".
 
-        Format the output as prose rather than an ordered list.
+        Using this context, write a biography formatted as prose.
         Use matter of fact statements and avoid phrases like "According to ..."
         and "Unfortunately, there are no details about".
 
@@ -359,12 +350,11 @@ def tearsheet_bio_2(client, qa_dict,
 
     context = ''
     for key in qa_dict:
-        context += ('\n\n' + qa_dict[key]['a'])
+        context += f'{key}: {qa_dict[key]["a"]}\n\n'
 
     formatted_prompt = bio_prompt_template.format(client=client, context=context)
 
     response = llm.call_as_llm(formatted_prompt)
-
     return response
 
 
@@ -484,8 +474,8 @@ if __name__ == '__main__':
     r4 = m.qa_metadata_filter(q4, vectordb, filter4)
 
     # test tearsheet bio functions separately
-    output1 = m.tearsheet_bio_1('Julia Harpman', vectordb)
-    output2 = m.tearsheet_bio_2('Julia Harpman', output1)
+    output1 = m.tearsheet_bio_1('Robert King', vectordb)
+    output2 = m.tearsheet_bio_2('Robert King', output1)
     output3 = m.tearsheet_bio_3(output2)
 
     # test tearsheet bio
