@@ -332,15 +332,15 @@ def tearsheet_bio_2(client, qa_dict,
 
     bio_prompt_template = '''
         You are a writer and biographer. You specialize in writing
-        accurate life summarizes given large input documents.
+        accurate life profiles given several input documents.
         Below is information on several topics about a single
         client named {client}.
 
         The context is arranged in the format "topic: information".
 
         Using this context, write a biography formatted as prose.
-        Use matter of fact statements and avoid phrases like "According to ..."
-        and "Unfortunately, there are no details about".
+        Use matter of fact statements and avoid phrases like "According to ...".
+        Do not add an "in summary" or "in conclusion" paragraph at the end of your response.
 
         Input context:
         {context}
@@ -366,8 +366,8 @@ def tearsheet_bio_3(proposed_bio,
     specified in the input prompt.
     '''
 
-    prompt = f'''Reformat the text below as a single paragraph, preserving order and details.\
-    Remove any sentences conveying missing details or insufficient information. Do not include sentences starting witih words like "Unfortunately".
+    prompt = f'''Reformat the text below. Preserving the order of details but 
+    consolidate similar themes into a paragraphs.
 
     ###
     {proposed_bio}
@@ -378,7 +378,7 @@ def tearsheet_bio_3(proposed_bio,
 
     response = llm.call_as_llm(prompt)
 
-    return response
+    return response#.replace('\n', '<br>')
 
 
 def generate_tearsheet(client, vectordb):
@@ -386,8 +386,11 @@ def generate_tearsheet(client, vectordb):
     Given client and vectorstore, generate tearsheet components and write.
     '''
 
+    print(f'generate_tearsheet for {client}')
     bio = tearsheet_bio(client, vectordb)
+    print(f'generate_tearsheet got bio')
     table = tearsheet_table(client, vectordb)
+    print(f'generate_tearsheet got table')
     html, output_path = write_to_html(client, bio, table)
 
     return html, output_path
@@ -489,8 +492,8 @@ if __name__ == '__main__':
     table3 = m.tearsheet_table('Julia Harpman', vectordb)
 
     # write tearsheet
-    #html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
-    html, output_path = m.write_to_html('Robert King', bio1, table1)
+    html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
+    #html, output_path = m.write_to_html('Robert King', bio1, table1)
     html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
-    #html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
-    html, output_path = m.write_to_html('Julia Harpman', bio3, table3)
+    html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
+    #html, output_path = m.write_to_html('Julia Harpman', bio3, table3)
