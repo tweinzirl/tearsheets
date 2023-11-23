@@ -22,7 +22,8 @@ def get_client_names(vectordb):
     return list(set([doc['client_name'] for doc in md]))
 
 
-def qa(q, client_name, All, Equilar, Google, Linkedin, Pitchbook, Relsci, WealthX, ZoomInfo):
+#def qa(Question, client_name, All, Equilar, Google, Linkedin, Pitchbook, Relsci, WealthX, ZoomInfo):
+def qa(Question, client_name, docs):
     '''
     Q&A function for app. Inputs:
         - question
@@ -31,20 +32,14 @@ def qa(q, client_name, All, Equilar, Google, Linkedin, Pitchbook, Relsci, Wealth
     '''
 
     # decide which documents to search
-    if All:
+    if 'All' in docs:
         filter_docs = 'all'
     else:
-        doc_types = ['Equilar', 'Google', 'Linkedin', 'Pitchbook', 'Relsci', 'WealthX', 'ZoomInfo']
+        filter_docs = [d.lower() for d in docs]
 
-        filter_docs = []  # writing as a list comprehension does not work great
-        for d in doc_types:
-            if eval(f'{d}==True'):
-                filter_docs.append(d.lower())
-
-    filter_ = tshu.create_filter(client_name,
-        filter_docs)
-
-    response = tshu.qa_metadata_filter(q, vectordb, filter_)
+    # create filter and run query
+    filter_ = tshu.create_filter(client_name, filter_docs)
+    response = tshu.qa_metadata_filter(Question, vectordb, filter_)
 
     return response
 
@@ -64,12 +59,19 @@ if __name__ == '__main__':
     client_names = m.get_client_names(vectordb)
 
     # build gradio interface
-    client_selector = gradio.Dropdown(choices=client_names, label='Client', type='value')
+    client_selector = gradio.Dropdown(choices=client_names, value='Robert King',
+        label='Client', type='value')
+
+    # checkbox group
+    checkboxes = ['All', 'Equilar', 'Google', 'Linkedin', 'Pitchbook', 'Relsci',
+        'WealthX', 'ZoomInfo']
+    doc_selector = gradio.CheckboxGroup(choices=checkboxes, value='All',
+        label='Context', info='Documents to search (Default: All).')
 
     # interface
     demo = gradio.Interface(
         fn=m.qa,
-        inputs=["text", client_selector] + 8*["checkbox"],
+        inputs=["text", client_selector, doc_selector],
         outputs=["text"],
     )
     demo.launch(share=args.share)
