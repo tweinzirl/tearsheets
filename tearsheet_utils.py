@@ -454,13 +454,13 @@ def format_template(template, bio, table, client='client', banker='banker',
 
     employer = table['employer']['a']
 
-    formatted_table = '<table class="center">'  # table start
+    formatted_table = '<table class="center" style="border: 1px solid;">'  # table start
 
     for key, value in table.items():
         formatted_table += f'''
         <tr>
-          <td><b>{key.capitalize()}:</b> </td>
-          <td>{value["a"]}</td>
+          <td style="border: 1px solid;"><b>{key.capitalize()}:</b> </td>
+          <td style="border: 1px solid;">{value["a"]}</td>
         </tr>
         '''
 
