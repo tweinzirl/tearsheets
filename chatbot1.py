@@ -6,6 +6,7 @@
 
 # local imports
 import tearsheet_utils as tshu
+import email_utils as emut
 
 # system imports
 import os
@@ -77,9 +78,9 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
     html, output_path = tshu.generate_tearsheet(client_name, vectordb, override=False)
 
     # todo: format / send email
-    #prep_and_send_email(output_path, img, email)
+    msg, success = emut.send_message(html, f'Your Tearsheet For {client_name}', email, verbose=False)
 
-    return f'called gen_send_tearsheet for client {client_name} and recipient {email}' #response
+    return f'called gen_send_tearsheet for client {client_name} and recipient {email}: {success}' #response
 
 
 # include is the client_name and recipient email address
@@ -122,8 +123,11 @@ if __name__ == '__main__':
     result2 = chain.invoke({"input": "what is Robert King's family net worth?"})
     result3 = chain.invoke({"input": "What deals as lead partner did Robert King do?"})
     result4 = chain.invoke({"input": "What recent news is there about Robert King?"})
-    result5 = chain.invoke({"input": "Write a tearsheet about Jared Livinglife and send it to siyer@target.com"})
+    result5 = chain.invoke({"input": "Write a tearsheet about Robert King and send it to tweinzirl@gmail.com"})
+    result6 = chain.invoke({"input": "Write a tearsheet about Julia Harpman and send it to tweinzirl@gmail.com"})
+    result7 = chain.invoke({"input": "Write a tearsheet about Velvet Throat and send it to tweinzirl@gmail.com"})
+    result8 = chain.invoke({"input": "Write a tearsheet about Jared Livinglife and send it to tweinzirl@gmail.com"})
 
-    for i, result in enumerate([result1, result2, result3, result4, result5]):
+    for i, result in enumerate([result1, result2, result3, result4, result5, result6, result7, result8]):
         observation = tool_map[result.tool].run(result.tool_input)
         print(f'\n{i}, {result.log} : {observation}\n')
