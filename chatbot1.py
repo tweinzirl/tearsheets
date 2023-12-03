@@ -54,7 +54,7 @@ def chat_with_docs(query: str,  client_name: str) -> dict:
 
     # create filter and run query
     filter_ = tshu.create_filter(client_name, 'all')
-    response = tshu.qa_metadata_filter(query, vectordb, filter_, top_k=3)
+    response = tshu.qa_metadata_filter(query, vectordb, filter_, top_k=10)
 
     #return f'called chat_with_docs for client {client_name}' #response
     return response
@@ -69,11 +69,12 @@ class GenSendTearsheetInput(BaseModel):
 def gen_send_tearsheet(client_name: str, email: str) -> dict:
     """
     Generate the tearsheet for the given client_name. Send to the given email
-    address.
+    address. If the tearsheet already exists, it is read from disk rather than
+    freshly remade.
     """
 
     # generate
-    #html, output_path = tshu.generate_tearsheet(client_name, vectordb)
+    html, output_path = tshu.generate_tearsheet(client_name, vectordb, override=False)
 
     # todo: format / send email
     #prep_and_send_email(output_path, img, email)
@@ -84,6 +85,8 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
 # include is the client_name and recipient email address
 # function wraps around tshu.generate_tearsheet(client, vectordb)
 
+# what clients do I have?
+
 # define table_from_db
 
 # define plot_from_db
@@ -91,6 +94,12 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
 
 if __name__ == '__main__':
     import chatbot1 as m
+
+    # todo: check right documents retrieved with simple query
+    # invent llm call to tag question with document types and use those as
+    # part of chat_with_docs: nested llm calls
+    # response: yes, this is working correctly, verified with
+    # vectordb.similarity_search and filter = {'client_name': 'Robert King'}
 
     tools = [m.chat_with_docs, m.gen_send_tearsheet]
     functions = [m.format_tool_to_openai_function(f) for f in tools]
@@ -118,6 +127,3 @@ if __name__ == '__main__':
     for i, result in enumerate([result1, result2, result3, result4, result5]):
         observation = tool_map[result.tool].run(result.tool_input)
         print(f'\n{i}, {result.log} : {observation}\n')
-
-    # test that functions run correctly
-    m.chat_with_docs('where does robert work?', 'Robert King', ['linkedin'])

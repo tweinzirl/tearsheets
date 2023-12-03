@@ -18,6 +18,10 @@ from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
 
 
+# where Tearsheets are saved
+TEARSHEET_DIR = 'data/tearsheets/tearsheet_{client}.html'
+
+
 def create_or_load_vectorstore(path, documents=[],
     embedding_function=OpenAIEmbeddings(), override=False):
     '''
@@ -381,27 +385,33 @@ def tearsheet_bio_3(proposed_bio,
     return response#.replace('\n', '<br>')
 
 
-def generate_tearsheet(client, vectordb):
+def generate_tearsheet(client, vectordb, override=True):
     '''
     Given client and vectorstore, generate tearsheet components and write.
+    If override is False, any existing document will be served. Otherwise,
+    a new document is generated if not present or if override is True.
     '''
 
-    print(f'generate_tearsheet for {client}')
-    bio = tearsheet_bio(client, vectordb)
-    print(f'generate_tearsheet got bio')
-    table = tearsheet_table(client, vectordb)
-    print(f'generate_tearsheet got table')
-    html, output_path = write_to_html(client, bio, table)
+    # check if document exists
+    html, output_path = read_tearsheet_html(client)
+
+    if html is None or override==True:
+        print(f'generate_tearsheet for {client}')
+        bio = tearsheet_bio(client, vectordb)
+        print(f'generate_tearsheet got bio')
+        table = tearsheet_table(client, vectordb)
+        print(f'generate_tearsheet got table')
+        html, output_path = write_tearsheet_html(client, bio, table)
 
     return html, output_path
 
 
-def write_to_html(client, bio, table):
+def write_tearsheet_html(client, bio, table):
     '''
     Write tearsheet data to html template
     '''    
     # output path
-    output_path = f'data/tearsheets/tearsheet_{client.replace(" ", "_")}.html'
+    output_path = TEARSHEET_DIR.format(client=client.replace(" ", "_"))
 
     # read template
     with open('data/tearsheets/template.html', 'r') as fin:
@@ -415,6 +425,25 @@ def write_to_html(client, bio, table):
         fout.write(html)
 
     return html, output_path
+
+
+def read_tearsheet_html(client):
+    '''
+    Read existing tearsheet document. Returns html and path if exists.
+    Otherwise returns None, None.
+    '''    
+    # output path
+    input_path = TEARSHEET_DIR.format(client=client.replace(" ", "_"))
+
+    if os.path.exists(input_path):
+        # read template
+        with open(input_path, 'r') as fin:
+            html = fin.read()
+
+        return html, input_path
+
+    else:
+        return None, None
 
 
 def format_template(template, bio, table, client='client', banker='banker',
@@ -493,7 +522,7 @@ if __name__ == '__main__':
 
     # write tearsheet
     html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
-    #html, output_path = m.write_to_html('Robert King', bio1, table1)
+    #html, output_path = m.write_tearsheet_html('Robert King', bio1, table1)
     html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
     html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
-    #html, output_path = m.write_to_html('Julia Harpman', bio3, table3)
+    #html, output_path = m.write_tearsheet_html('Julia Harpman', bio3, table3)
