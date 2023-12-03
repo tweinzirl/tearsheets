@@ -16,11 +16,16 @@ from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
 
-from langchain.tools import tool
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.tools.render import format_tool_to_openai_function
+from langchain.agents import AgentExecutor
+from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.schema.runnable import RunnablePassthrough
+from langchain.tools import tool
+from langchain.tools.render import format_tool_to_openai_function
+
 
 from typing import Optional, List
 from pydantic.v1 import BaseModel, Field
@@ -83,14 +88,47 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
     return f'called gen_send_tearsheet for client {client_name} and recipient {email}: {success}' #response
 
 
-# include is the client_name and recipient email address
-# function wraps around tshu.generate_tearsheet(client, vectordb)
-
 # what clients do I have?
 
 # define table_from_db
 
 # define plot_from_db
+
+# define custom agent as class
+class ChatAgent:
+    '''Custom agent for using tools defined in this module.'''
+
+    def __init__(self):
+        # update this list of tools as more are added
+        tools = [chat_with_docs, gen_send_tearsheet]
+        openai_functions = [format_tool_to_openai_function(f) for f in tools]
+
+        # prompt
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are helpful but sassy assistant"),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad")
+        ])
+
+        # model
+        model = ChatOpenAI(temperature=0).bind(functions=openai_functions)
+
+        # memory
+        memory = ConversationBufferMemory(return_messages=True, memory_key="chat_history")
+        
+        # agent chain
+        agent_chain = RunnablePassthrough.assign(
+            agent_scratchpad= lambda x: format_to_openai_functions(x["intermediate_steps"])
+        ) | prompt | model | OpenAIFunctionsAgentOutputParser()
+
+
+        self.agent = AgentExecutor(agent=agent_chain, tools=tools, verbose=True, memory=memory)
+
+    def run(self, user_input):
+        '''Function that submits user input to chatbot.'''
+
+        response = self.agent.invoke({"input": user_input})
 
 
 if __name__ == '__main__':
@@ -131,3 +169,15 @@ if __name__ == '__main__':
     for i, result in enumerate([result1, result2, result3, result4, result5, result6, result7, result8]):
         observation = tool_map[result.tool].run(result.tool_input)
         print(f'\n{i}, {result.log} : {observation}\n')
+
+
+    # chatbot interface
+    agent = m.ChatAgent()
+    # - set up agent code and function.  run examples.  examine what the history is
+    # try example here: https://www.gradio.app/guides/creating-a-chatbot-fast#a-langchain-example
+    # - in above example replace agent history with gradio session history but in format for an agent
+
+
+    #### todo: update prompt in qa chain to always use the ocntext and ignore objections over not having access to personal information or recent news on google.
+    # e.g., what is julia harpman doing these days?
+    # - does julia harpman own any stock yet?
