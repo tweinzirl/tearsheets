@@ -89,8 +89,17 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
 
     return f'called gen_send_tearsheet for client {client_name} and recipient {email}: {success}' #response
 
-
 # what clients do I have?
+@tool
+def list_my_clients() -> dict:
+    """
+    Look up all the client names according to metadata in the global vectorstore.
+    """
+
+    md = vectordb.get()['metadatas']
+    return list(set([doc['client_name'] for doc in md]))
+
+
 
 # define table_from_db
 
@@ -102,7 +111,7 @@ class ChatAgent:
 
     def __init__(self):
         # update this list of tools as more are added
-        tools = [chat_with_docs, gen_send_tearsheet]
+        tools = [chat_with_docs, gen_send_tearsheet, list_my_clients]
         openai_functions = [format_tool_to_openai_function(f) for f in tools]
 
         # prompt
