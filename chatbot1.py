@@ -20,8 +20,9 @@ from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
 from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import  ChatMessageHistory, ConversationBufferMemory
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.schema import AIMessage, HumanMessage
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.tools import tool
 from langchain.tools.render import format_tool_to_openai_function
@@ -30,6 +31,7 @@ from langchain.tools.render import format_tool_to_openai_function
 from typing import Optional, List
 from pydantic.v1 import BaseModel, Field
 
+import gradio
 
 # load vectordb
 vectordb = tshu.create_or_load_vectorstore('data/chroma',
@@ -129,11 +131,15 @@ class ChatAgent:
         '''Function that submits user input to chatbot.'''
 
         response = self.agent.invoke({"input": user_input})
+        #repsonse is a dict with keys for input, output, chat_history
+
+        return response['output']
 
 
 if __name__ == '__main__':
     import chatbot1 as m
 
+    """
     # todo: check right documents retrieved with simple query
     # invent llm call to tag question with document types and use those as
     # part of chat_with_docs: nested llm calls
@@ -169,15 +175,44 @@ if __name__ == '__main__':
     for i, result in enumerate([result1, result2, result3, result4, result5, result6, result7, result8]):
         observation = tool_map[result.tool].run(result.tool_input)
         print(f'\n{i}, {result.log} : {observation}\n')
-
+    """
 
     # chatbot interface
     agent = m.ChatAgent()
-    # - set up agent code and function.  run examples.  examine what the history is
-    # try example here: https://www.gradio.app/guides/creating-a-chatbot-fast#a-langchain-example
-    # - in above example replace agent history with gradio session history but in format for an agent
+
+    def agent_chat(query, history):
+        '''
+        Function to link gradio chat interface with langchain agent.
+        Agent history is customized to match the chat history of the chat.
+        This allows separate chats to take place simultaneously.
+        Code based on https://www.gradio.app/guides/creating-a-chatbot-fast#a-langchain-example
+        '''
+        message_history = []
+        for human, ai in history:
+            message_history.append(HumanMessage(content=human))
+            message_history.append(AIMessage(content=ai))
+
+        agent.agent.memory.chat_memory = ChatMessageHistory(messages=message_history)
+
+        return agent.run(query)
+
+
+    demo = gradio.ChatInterface(fn=agent_chat,
+        examples=["Where does CLIENT work?", "Send the tearsheet for CLIENT to EMAIL", "Who are my clients?"],
+        title="Tearsheet Chatbot v0.1",
+        retry_btn=None,
+        undo_btn=None,
+        clear_btn=None,
+        )
+    ### 
+    demo.launch()
 
 
     #### todo: update prompt in qa chain to always use the ocntext and ignore objections over not having access to personal information or recent news on google.
     # e.g., what is julia harpman doing these days?
     # - does julia harpman own any stock yet?
+
+    # todo: customize dimensions, style of chatbot
+
+    # good questions:
+    #   - 'summarize Robert King\'s board membership history. separate current from prior positions. format as a markdown table'
