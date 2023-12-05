@@ -60,9 +60,11 @@ def chat_with_docs(query: str,  client_name: str) -> dict:
     'wealthx' - For individual and family net worth, interests, passions, hobbies.
     """
 
+    client_name = ' '.join([w.capitalize() for w in client_name.split(' ')])
+
     # create filter and run query
     filter_ = tshu.create_filter(client_name, 'all')
-    response = tshu.qa_metadata_filter(query, vectordb, filter_, top_k=10)
+    response = tshu.qa_metadata_filter(query, vectordb, filter_, top_k=5)
 
     #return f'called chat_with_docs for client {client_name}' #response
     return response
@@ -80,6 +82,8 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
     address. If the tearsheet already exists, it is read from disk rather than
     freshly remade.
     """
+
+    client_name = ' '.join([w.capitalize() for w in client_name.split(' ')])
 
     # generate
     html, output_path = tshu.generate_tearsheet(client_name, vectordb, override=False)
@@ -217,11 +221,14 @@ if __name__ == '__main__':
     demo.launch()
 
 
-    #### todo: update prompt in qa chain to always use the ocntext and ignore objections over not having access to personal information or recent news on google.
+    #### todo: 
+    #   1) update prompt in qa chain to always use the ocntext and ignore objections over not having access to personal information or recent news on google.
     # e.g., what is julia harpman doing these days?
     # - does julia harpman own any stock yet?
 
-    # todo: customize dimensions, style of chatbot
+    # 2) email transcript of chat, may require agent as global variable
+
+    # 3) customize dimensions, style of chatbot
 
     # good questions:
     #   - 'summarize Robert King\'s board membership history. separate current from prior positions. format as a markdown table'

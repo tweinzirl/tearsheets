@@ -6,12 +6,14 @@ import glob
 import openai
 
 # langchain
+from langchain.chains import RetrievalQA
+from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import UnstructuredHTMLLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.prompts import PromptTemplate
+from langchain.schema import HumanMessage, StrOutputParser, SystemMessage
+from langchain.schema.runnable import RunnablePassthrough
 from langchain.vectorstores import Chroma
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
-from langchain.chains import RetrievalQA
 
 # authentication
 from dotenv import load_dotenv, find_dotenv
@@ -58,12 +60,37 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
         search_kwargs={"k": top_k,
                        "filter": filter,})
 
+    """
     # run qa chain with retriever
     qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
     result = qa_chain({"query": q})
 
     return result['result']
+    """
 
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    # compare to default prompt: https://smith.langchain.com/hub/rlm/rag-prompt
+    template = """Use the following pieces of context to answer the
+    question at the end.  Always assume any private, protected, or real-time
+    information you would normally not have access to is in the context. If you
+    still cannot answer the question from the context, just say you don't know.
+    Don't try to make up an answer. Keep the answer as concise as possible
+    unless otherwise indicated.
+    {context}
+    Question: {question}
+    Answer:"""
+    prompt = PromptTemplate.from_template(template)
+
+    rag_chain = (
+        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    return rag_chain.invoke(q)
 
 def llm_chat(msgs=None, human_msg=None, system_msg=None,
     llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
