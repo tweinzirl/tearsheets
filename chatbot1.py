@@ -41,7 +41,7 @@ vectordb = tshu.create_or_load_vectorstore('data/chroma',
 
 # define chat_with_docs function
 class ChatWithDocsInput(BaseModel):
-    query: str = Field(..., description="Question to ask the document store.")
+    query: str = Field(..., description="Pass the entire user's question unaltered into this parameter.")
     client_name: str = Field(..., description="Name of client to query for.")
 
 @tool(args_schema=ChatWithDocsInput)
@@ -64,6 +64,7 @@ def chat_with_docs(query: str,  client_name: str) -> dict:
 
     # create filter and run query
     filter_ = tshu.create_filter(client_name, 'all')
+    print(query, filter_)
     response = tshu.qa_metadata_filter(query, vectordb, filter_, top_k=5)
 
     #return f'called chat_with_docs for client {client_name}' #response
@@ -232,3 +233,10 @@ if __name__ == '__main__':
 
     # good questions:
     #   - 'summarize Robert King\'s board membership history. separate current from prior positions. format as a markdown table'
+    #   - list deals where client robert king has been lead partner
+    #     -- who was robert king representing in that deal
+    #     -- what was the size of the deal
+    #     -- what is the status of the deal
+    #     -- what other partners were involved in the deal
+
+    #   - tell me about Velvet Throat's music career
