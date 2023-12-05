@@ -11,6 +11,7 @@ import email_utils as emut
 # system imports
 import os
 import openai
+import argparse
 
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
@@ -49,6 +50,11 @@ def chat_with_docs(query: str,  client_name: str) -> dict:
     # question: should document details go here or in the chat agent prompt?
     """
     Search the document store with the given query for the given client name. 
+
+    Inputs:
+        query - Should be user's original input unaltered.
+        client_name - The name of the client to query for.
+
     The document store filters for the top documents given the query. Document
     types include:
     
@@ -191,6 +197,14 @@ if __name__ == '__main__':
         print(f'\n{i}, {result.log} : {observation}\n')
     """
 
+    # args
+    parser = argparse.ArgumentParser(description='Start app. Optionally share to web.')
+    parser.add_argument('--share', dest='share', action='store_true',
+                        help='Share the app to the web (default: False).')
+
+    args = parser.parse_args()
+
+
     # chatbot interface
     agent = m.ChatAgent()
 
@@ -219,11 +233,11 @@ if __name__ == '__main__':
         clear_btn=None,
         )
     ### 
-    demo.launch()
+    demo.launch(share=args.share)
 
 
     #### todo: 
-    #   1) update prompt in qa chain to always use the ocntext and ignore objections over not having access to personal information or recent news on google.
+    #   x 1) update prompt in qa chain to always use the ocntext and ignore objections over not having access to personal information or recent news on google.
     # e.g., what is julia harpman doing these days?
     # - does julia harpman own any stock yet?
 
@@ -240,3 +254,5 @@ if __name__ == '__main__':
     #     -- what other partners were involved in the deal
 
     #   - tell me about Velvet Throat's music career
+
+    #   - tell chatbot what the query it should use is: for client robert king run query "print date for the article called `Robert King donates $1 million to a local charity`"
