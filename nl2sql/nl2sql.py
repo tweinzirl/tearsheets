@@ -8,13 +8,13 @@ from sqlalchemy import exc, create_engine, text as sql_text
 import argparse
 import gradio as gr
 
-Message_Template_Filename = 'Template_MySQL-1.txt'
-VDSDB_Filename =  "Question_Query_Embeddings-1.txt"
+Message_Template_Filename = 'nl2sql/Template_MySQL-1.txt'
+VDSDB_Filename =  "nl2sql/Question_Query_Embeddings-1.txt"
 VDSDB = "Dataframe"
 
 # for local modules
-from NL2SQL_functions import Prepare_Message_Template, Run_Query
-from lib_OpenAI_Embeddings import VDS
+from nl2sql.NL2SQL_functions import Prepare_Message_Template, Run_Query
+from nl2sql.lib_OpenAI_Embeddings import VDS
 
 
 MYSQL_USER = os.getenv("MYSQL_USER", None)

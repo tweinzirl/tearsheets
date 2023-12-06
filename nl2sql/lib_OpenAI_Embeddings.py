@@ -5,7 +5,7 @@ import openai
 
 from scipy import spatial  # for calculating vector similarities for search
 from ast import literal_eval # Function used to cast embedding vectors stored as strings to arrays
-from OpenAI_Func import Num_Tokens_From_String, OpenAI_Embeddings_Cost, OpenAI_Embeddings_Cost
+from nl2sql.OpenAI_Func import Num_Tokens_From_String, OpenAI_Embeddings_Cost, OpenAI_Embeddings_Cost
 
 #############################################################################
 class OpenAI_Embeddings():

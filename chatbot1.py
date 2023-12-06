@@ -7,6 +7,7 @@
 # local imports
 import tearsheet_utils as tshu
 import email_utils as emut
+from nl2sql import nl2sql
 
 # system imports
 import os
@@ -113,6 +114,30 @@ def list_my_clients() -> dict:
 
 
 # define table_from_db
+class ChatWithDB(BaseModel):
+    query: str = Field(..., description="Pass the entire user's question unaltered into this parameter.")
+
+@tool(args_schema=ChatWithDB, return_direct=True)
+def chat_with_db(query: str) -> dict:
+    # question: should document details go here or in the chat agent prompt?
+    """
+    Search the database for banking information such as:
+     - accounts and products,
+     - client data (banker, address, employer name, entity type),
+     - household relationships (clients grouped to the same entity)
+
+    Given an input query, a function is called to convert the text to SQL and
+    then run that query against the database.
+
+    Inputs:
+        query - Should be user's original input unaltered.
+
+    Output: The resulting dataframe is returned in HTML format.
+    """
+
+    sql, df = nl2sql.sql_to_df(query, return_sql=True)
+    return df.to_html()
+
 
 # define plot_from_db
 
@@ -122,7 +147,7 @@ class ChatAgent:
 
     def __init__(self):
         # update this list of tools as more are added
-        tools = [chat_with_docs, gen_send_tearsheet, list_my_clients]
+        tools = [chat_with_docs, chat_with_db, gen_send_tearsheet, list_my_clients]
         openai_functions = [format_tool_to_openai_function(f) for f in tools]
 
         # prompt
