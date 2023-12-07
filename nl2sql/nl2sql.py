@@ -11,6 +11,7 @@ import gradio as gr
 Message_Template_Filename = 'nl2sql/Template_MySQL-1.txt'
 VDSDB_Filename =  "nl2sql/Question_Query_Embeddings-1.txt"
 VDSDB = "Dataframe"
+LLM_MODEL = 'gpt-3.5-turbo-0613'
 
 # for local modules
 from nl2sql.NL2SQL_functions import Prepare_Message_Template, Run_Query
@@ -26,9 +27,9 @@ Embedding_Model = "text-embedding-ada-002"
 Encoding_Base = "cl100k_base"
 Max_Tokens = 250
 Temperature = 0
-Token_Cost = {"gpt-3.5-turbo-instruct":{"Input":0.0015/1000,"Output":0.002/1000},
-                "gpt-3.5-turbo":{"Input":0.001/1000,"Output":0.002/1000},
-                "text-embedding-ada-002":{"Input":0.0001/1000, "Output":0.0001/1000}}
+Token_Cost = {"gpt-3.5-turbo-instruct": {"Input":0.0015/1000,"Output":0.002/1000},
+                LLM_MODEL: {"Input":0.001/1000,"Output":0.002/1000},
+                "text-embedding-ada-002": {"Input":0.0001/1000, "Output":0.0001/1000}}
 
 LOCAL_VDS = VDS(VDSDB_Filename, Encoding_Base, Embedding_Model, Token_Cost, Max_Tokens) 
 LOCAL_VDS.Load_VDS_DF(Verbose=False)
@@ -61,7 +62,7 @@ def sql_to_df(Message, return_sql=False, Verbose=False, Debug=False):
     
     # pass to LLM    
     response = openai.ChatCompletion.create(
-        model='gpt-3.5-turbo',
+        model=LLM_MODEL,
         messages=message_history,
         temperature=1.0
       #  stream=True

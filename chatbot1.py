@@ -115,10 +115,10 @@ def list_my_clients() -> dict:
 
 # define table_from_db
 class ChatWithDB(BaseModel):
-    query: str = Field(..., description="Pass the entire user's question unaltered into this parameter.")
+    english_input: str = Field(..., description="Pass the entire user's natural language question unaltered into this parameter.")
 
 @tool(args_schema=ChatWithDB, return_direct=True)
-def chat_with_db(query: str) -> dict:
+def chat_with_db(english_input: str) -> dict:
     # question: should document details go here or in the chat agent prompt?
     """
     Search the database for banking information such as:
@@ -130,12 +130,14 @@ def chat_with_db(query: str) -> dict:
     then run that query against the database.
 
     Inputs:
-        query - Should be user's original input unaltered.
+        query - Should be user's original English question unaltered.
 
     Output: The resulting dataframe is returned in HTML format.
     """
 
-    sql, df = nl2sql.sql_to_df(query, return_sql=True)
+    sql, df = nl2sql.sql_to_df(english_input, return_sql=True)
+    print(sql)
+    print(df)
     return df.to_html()
 
 
