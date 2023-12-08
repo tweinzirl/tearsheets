@@ -253,11 +253,11 @@ if __name__ == '__main__':
 
 
     demo = gradio.ChatInterface(fn=agent_chat,
-        examples=["Where does CLIENT work?", "Send the tearsheet for CLIENT to EMAIL", "Who are my clients?"],
+        examples=["Where does client |NAME| work?", "Send the tearsheet for client |NAME| to |EMAIL|", "List my clients."],
         title="Tearsheet Chatbot v0.1",
         retry_btn=None,
         undo_btn=None,
-        clear_btn=None,
+        clear_btn='Clear Chat History',
         )
     ### 
     demo.launch(share=args.share)
@@ -273,7 +273,9 @@ if __name__ == '__main__':
     # 3) customize dimensions, style of chatbot
 
     # good questions:
-    #   - 'summarize Robert King\'s board membership history. separate current from prior positions. format as a markdown table'
+    #   - what is the employment history of Robert King as a markdown table?
+
+    #   - summarize Robert King\'s board membership history. separate current from prior positions. format as a markdown table
     #   - list deals where client robert king has been lead partner
     #     -- who was robert king representing in that deal
     #     -- what was the size of the deal
