@@ -64,7 +64,7 @@ def sql_to_df(Message, return_sql=False, Verbose=False, Debug=False):
     response = openai.ChatCompletion.create(
         model=LLM_MODEL,
         messages=message_history,
-        temperature=1.0
+        temperature=0
       #  stream=True
     )
 
