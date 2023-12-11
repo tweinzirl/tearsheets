@@ -49,3 +49,48 @@ def Run_Query(Credentials=None, Query=None, Verbose=False):
         return pd.DataFrame()
 ##############################################################################
 #
+
+# Export_df
+def Export_df(df, Filename, WD=None, Delimator = ",", Verbose=False):   
+        # Determine File type (txt with deliminator, xlsx, csvs, etc ...)
+        # strip the suffix, e.g. .csv, .xlsx, assume filename is given as prefix-i.suffix
+
+        Suffix = Filename[-4:].replace('.','')
+        if Suffix in ({'csv', 'txt', 'xlsx'}):
+            Format = Suffix
+        else:
+            print(f'Output_results_df: Unsupported Filetype {Suffix}')
+            return 0
+        if WD is not None:
+            Filename = f"{WD}/{Filename}" 
+
+        n = len(df)
+        # Convert embedding vector to n columns in dataframe before saving
+        if Format == 'xlsx':
+            try:
+                df.to_excel(Filename,sheet_name='DF',index=False, header=True)
+                msg = f'{n} rows were exported to {Filename}'
+                return msg
+            except:
+                msg = f'Failed to write to {Filename}'
+                return msg
+        elif Format == 'csv':
+            try:
+                Delimator = ","
+                df.to_csv(Filename,header=True, index=False, sep = Delimator) 
+                msg = f'{n} rows were exported to {Filename}'
+                return msg
+            except:
+                msg = f'Failed to write to {Filename}'
+                return msg
+        elif Format == 'txt':
+            try:
+                Delimator = "\t"
+                df.to_csv(Filename,header=True, index=False, sep = Delimator) 
+                msg = f'{n} rows were exported to {Filename}'
+                return msg
+            except:
+                msg = f'Failed to write to {Filename}'
+                return msg
+        else:
+            print(f"Output_results_df: File format {Format} is not supported")

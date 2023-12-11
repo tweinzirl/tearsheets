@@ -9,15 +9,15 @@ from sqlalchemy import exc, create_engine, text as sql_text
 import argparse
 import gradio as gr
 
-Message_Template_Filename = f'Message_templates/Template_MySQL-1.txt'
+Message_Template_Filename = f'Template_MySQL-1.txt'
 VDSDB_Filename =  "Question_Query_Embeddings-1.txt"
 VDSDB = "Dataframe"
 
 # for local modules
 # sys.path.append(WD)
-from NL2SQL_functions import Prepare_Message_Template, Run_Query
+from nl2sql.NL2SQL_functions import Prepare_Message_Template, Run_Query
 #from ChatGPT_Messages.src.lib.OpenAI_Func import Num_Tokens_From_String, OpenAI_Embeddings_Cost, OpenAI_Embeddings_Cost
-from lib_OpenAI_Embeddings import VDS
+from nl2sql.lib_OpenAI_Embeddings import VDS
 
 
 MYSQL_USER = os.getenv("MYSQL_USER", None)
@@ -66,7 +66,7 @@ def predict(Message, Verbose = False, Debug=False):
     response = openai.ChatCompletion.create(
         model='gpt-3.5-turbo',
         messages= predict.Message_History,
-        temperature=1.0
+        temperature=0
       #  stream=True
     )
 

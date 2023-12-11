@@ -180,13 +180,24 @@ create table Transactions
         );
 
 Some hints include:
+Use the relationship table to associate clients with accounts or account with clients
+Unless specified in the question, insert "relationship.relationship_type ='Primary'" in the where
+clause when joining on the relationship table.
 When asked about account types, use the "type" field in the product table. 
 When asked about a client id, use the "id" field in the client table.
+When asked for the full or complete address, return "address, city, state and zip" from the address table.
 When asked about a clients who share a household, join the "client" table with "HH" table.
+When asked to return the count of accounts, 
+    use the following syntax for open accounts
+        sum(case when account.status = 'Open' then 1 else 0 end) 
+    use the following syntax for closed accounts
+        sum(case when account.status = 'Closed' then 1 else 0 end) 
+Never use First_Name and Last_Name when querying the client table.
+
 You must not include a ? symbol in the returned query.
 You must not include 'Query:' in the returned query.
 Do not use Start_Dt, End_Dt, or Is_Current in the query.
-When asked for portfolio summary, return account type, number of open accounts, number of closed accounts, total balances,
-month to date average balance
+Unless otherwise requested, add limit 10 to the end of the query.
 
-Only return a query unless there is there is ambiguity in the question. In that case, ask the user to clarify their question. 
+Only return a query unless there is there is ambiguity in the question. 
+In that case, ask the user to clarify their question. 

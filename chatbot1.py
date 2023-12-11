@@ -7,7 +7,7 @@
 # local imports
 import tearsheet_utils as tshu
 import email_utils as emut
-from nl2sql import nl2sql
+from nl2sql import nl2sql_util
 
 # system imports
 import os
@@ -135,7 +135,7 @@ def chat_with_db(english_input: str) -> dict:
     Output: The resulting dataframe is returned in HTML format.
     """
 
-    sql, df = nl2sql.sql_to_df(english_input, return_sql=True)
+    sql, df = nl2sql_util.sql_to_df(english_input, return_sql=True)
     print(sql)
     print(df)
     return df.to_html()

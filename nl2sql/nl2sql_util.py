@@ -11,7 +11,7 @@ import gradio as gr
 Message_Template_Filename = 'nl2sql/Template_MySQL-1.txt'
 VDSDB_Filename =  "nl2sql/Question_Query_Embeddings-1.txt"
 VDSDB = "Dataframe"
-LLM_MODEL = 'gpt-3.5-turbo-0613'
+LLM_MODEL = 'gpt-3.5-turbo'
 
 # for local modules
 from nl2sql.NL2SQL_functions import Prepare_Message_Template, Run_Query
