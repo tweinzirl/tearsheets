@@ -10,4 +10,4 @@ More sophisticated MySQL (Mariadb) database dumped to fakebank-data-dump-2023120
    - `MariaDB> FLUSH PRIVILEGES;`
  - Update the collation to be compatible with MariaDB: Change occurrences of `utf8mb4_0900_ai_ci` to `utf8mb4_unicode_520_ci` ([reference](https://dba.stackexchange.com/questions/248904/mysql-to-mariadb-unknown-collation-utf8mb4-0900-ai-ci/298478#298478))
  - Load sql file into database from bash shell:
-   - mariadb -u timw -p fakebank < fakebank-data-dump-20231206.sql`
+   - `mariadb -u timw -p fakebank < fakebank-data-dump-20231206.sql`
