@@ -1,0 +1,11 @@
+what are robert king's account balances on 10/15/2023? include date, account number, account type, and balances.
+
+show robert king's ACH transactions in october 2023. include date, account number, purpose, description, and amount.
+
+how many transactions per month grouped by transaction purpose does Robert King make? do not limit to just 10.
+
+what clients are employed by Stevens Valley School? include as columns employer name, client name, and client complete address. Do not limit to just 10.
+
+show robert king's checking account balances by date for October 2023. show more than 10
+
+show all checking accounts and their open date for robert king
