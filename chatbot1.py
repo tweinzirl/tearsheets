@@ -43,17 +43,17 @@ vectordb = tshu.create_or_load_vectorstore('data/chroma',
 
 # define chat_with_docs function
 class ChatWithDocsInput(BaseModel):
-    query: str = Field(..., description="Pass the entire user's question unaltered into this parameter.")
+    english_input: str = Field(..., description="Pass the entire user's natural language question unaltered into this parameter.")
     client_name: str = Field(..., description="Name of client to query for.")
 
 @tool(args_schema=ChatWithDocsInput)
-def chat_with_docs(query: str,  client_name: str) -> dict:
+def chat_with_docs(english_input: str,  client_name: str) -> dict:
     # question: should document details go here or in the chat agent prompt?
     """
     Search the document store with the given query for the given client name. 
 
     Inputs:
-        query - Should be user's original input unaltered.
+        english_input - Should be user's original input unaltered.
         client_name - The name of the client to query for.
 
     The document store filters for the top documents given the query. Document
@@ -71,8 +71,8 @@ def chat_with_docs(query: str,  client_name: str) -> dict:
 
     # create filter and run query
     filter_ = tshu.create_filter(client_name, 'all')
-    print(query, filter_)
-    response = tshu.qa_metadata_filter(query, vectordb, filter_, top_k=5)
+    print(english_input, filter_)
+    response = tshu.qa_metadata_filter(english_input, vectordb, filter_, top_k=5)
 
     #return f'called chat_with_docs for client {client_name}' #response
     return response
@@ -125,9 +125,25 @@ def chat_with_db(english_input: str) -> dict:
      - accounts and products,
      - client data (banker, address, employer name, entity type),
      - household relationships (clients grouped to the same entity)
+     - client recommendations, including current Top 3 recommendations
 
     Given an input query, a function is called to convert the text to SQL and
     then run that query against the database.
+
+    The tables in the database include:
+     - account
+     - address
+     - balance
+     - banker
+     - client
+     - date
+     - employer
+     - hh
+     - naics
+     - product
+     - recommendations
+     - relationship
+     - transactions
 
     Inputs:
         query - Should be user's original English question unaltered.

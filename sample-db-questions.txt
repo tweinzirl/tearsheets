@@ -39,3 +39,7 @@ Show full tables in the database
 Write a bio for client Robert King, 300 words minimum.
 
 Write a bio for client Robert King, 100 words maximum.
+
+List available news articles in the docs for client Robert King
+
+What documents does `chat_with_docs` have access to?
