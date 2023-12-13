@@ -1,3 +1,5 @@
+Database questions:
+
 what are robert king's account balances on 10/15/2023? include date, account number, account type, and balances.
 
 show robert king's ACH transactions in october 2023. include date, account number, purpose, description, and amount.
@@ -9,3 +11,31 @@ what clients are employed by Stevens Valley School? include as columns employer 
 show robert king's checking account balances by date for October 2023. show more than 10
 
 show all checking accounts and their open date for robert king
+
+===========
+
+Vector db questions
+
+summarize lead partner deals by client Robert King. -> brief answer. Then give the followup for a longer conversational answer: show all the details for the previous answer
+
+Find similar examples where chat history is leveraged to make a conversation
+
+what information can I get from the chat_with_docs function?
+
+what information can I get from the chat_with_db function?
+
+how can you functions help me learn about my clients?
+
+Show all available client recommendations.
+
+check the database for all of my Top 3 recommendations
+
+Show all of my recommendations of report type 'Birthday'
+
+Does the database contain a field for birthday or birthdate?
+
+Show full tables in the database
+
+Write a bio for client Robert King, 300 words minimum.
+
+Write a bio for client Robert King, 100 words maximum.
