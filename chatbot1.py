@@ -101,6 +101,39 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
 
     return f'called gen_send_tearsheet for client {client_name} and recipient {email}: {success}' #response
 
+
+# define generate_and_send_top3 function
+class SendTop3Input(BaseModel):
+    email: str = Field(..., description="Email that will receive report this function sends.")
+
+@tool(args_schema=SendTop3Input)
+def send_top3_email(email: str ='') -> dict:
+    """
+    Send the Top 3 alerts to the given email address. Only use this function if
+    the user specifically requests an email about Top 3.
+    """
+
+    if email=='':
+        return 'Email not sent because no email address was indicated. Use chat_with_db tool instead.'
+
+    # generate
+    table = chat_with_db.invoke({'english_input': 'show all of my top 3 recommendations'})
+
+    html = f'''
+    Dear Banker,<br><br>
+    See below for your daily Top 3 recommendations.<br>
+    {table}<br><br>
+    Regards,<br>
+    EQuABLE (Embedded Quant - AI Bank Lookup & Exploration)
+    '''
+
+    # todo: format / send email
+    msg, success = emut.send_message(html, f'Your Daily Top 3 Recommendations', email, verbose=False)
+
+    return f'called gen_send_top3 for recipient {email}: {success}' #response
+
+
+
 # what clients do I have?
 @tool
 def list_my_clients() -> dict:
@@ -154,7 +187,7 @@ def chat_with_db(english_input: str) -> dict:
     sql, df = nl2sql_util.sql_to_df(english_input, return_sql=True)
     print(sql)
     print(df)
-    return df.to_html()
+    return df.to_html(index=None)
 
 
 # define plot_from_db
@@ -165,7 +198,7 @@ class ChatAgent:
 
     def __init__(self):
         # update this list of tools as more are added
-        tools = [chat_with_docs, chat_with_db, gen_send_tearsheet, list_my_clients]
+        tools = [chat_with_docs, chat_with_db, gen_send_tearsheet, list_my_clients, send_top3_email]
         openai_functions = [format_tool_to_openai_function(f) for f in tools]
 
         # prompt
@@ -267,13 +300,25 @@ if __name__ == '__main__':
 
         return agent.run(query)
 
+    CSS ="""
+        .contain { display: flex; flex-direction: column; }
+        .gradio-container { height: 100vh !important; }
+        #component-0 { height: 100%; }
+        #chatbot { flex-grow: 1; overflow: auto;}
+    """  # custom css does not work to make chat taller
 
     demo = gradio.ChatInterface(fn=agent_chat,
-        examples=["Where does client |NAME| work?", "Send the tearsheet for client |NAME| to |EMAIL|", "List my clients."],
-        title="Tearsheet Chatbot v0.1",
+        chatbot=gradio.Chatbot(elem_id="chatbot"),
+        examples=["Where does client |NAME| work?",
+                  "Send the tearsheet for client |NAME| to |EMAIL|",
+                  "List my clients",
+                  "Count my recommendations by report name",
+                  "List my Top 3 recommendations"],
+        title="EQuABLE: Embedded Quant - AI Bank Lookup & Exploration",
         retry_btn=None,
         undo_btn=None,
         clear_btn='Clear Chat History',
+        css=CSS,
         )
     ### 
     demo.launch(share=args.share)
