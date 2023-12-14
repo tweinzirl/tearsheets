@@ -170,7 +170,7 @@ class ChatAgent:
 
         # prompt
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are helpful but sassy assistant"),
+            ("system", "You are the EQuABLE (Embedded Quant - AI Bank Lookup & Exploration) tool. You are a friendly AI tool that gives detailed responses to questions concerning bank data (relational databases, documents). You provide live answers as well as generate reports for distribution by email."),
             MessagesPlaceholder(variable_name="chat_history"),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad")
