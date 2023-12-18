@@ -12,6 +12,6 @@ More sophisticated MySQL (Mariadb) database dumped to fakebank-data-dump-2023120
  - Load sql file into database from bash shell:
    - `mariadb -u timw -p fakebank < fakebank-data-dump-20231206.sql`
  - Adding client recommendations (extra data not included in the original data dump) to the database as a table called `recommendations`:
-   - load recommendations.csv in memory: `df = pd.read_csv('recommendations.csv')
+   - load recommendations.csv in memory: `df = pd.read_csv('recommendations.csv')`
    - connect to database with dbio (package available on request): `cobj = dbio.connectors.MySQL(db_user_name, db_password, port=None, database='fakebank')`
    - upload to table: `cobj.write(df, 'recommendations', if_exists='replace')`
