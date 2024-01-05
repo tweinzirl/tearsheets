@@ -18,15 +18,18 @@ import pandas as pd
 
 import config
 
+
 def regions(n):
    '''Return n distinct regions and regional managers'''
    x = np.arange(1, n+1, 1)
    return pd.DataFrame(np.array([x,x]).T, columns=['Region_Number', 'Regional_Manager'])
 
+
 def branches(n):
    '''Return n distinct branches and branch managers'''
    x = np.arange(1, n+1, 1)
    return pd.DataFrame(np.array([x, x]).T, columns=['Branch_Number', 'Branch_Manager'])
+
 
 def regions_and_branches(n_regions, n_branches):
     '''Name n_regions regions each with n_branches branches
@@ -40,6 +43,7 @@ def regions_and_branches(n_regions, n_branches):
     df.Branch_Manager = range(1, df.shape[0]+1, 1)
 
     return df
+
     
 def assign_personnel_to_branches(df):
     '''
@@ -77,3 +81,42 @@ def assign_personnel_to_branches(df):
     banker_df.Banker_ID = range(1,banker_df.shape[0]+1,1)
 
     return df.astype(int), banker_df
+
+
+def clients(n):
+    '''
+    Allocate clients of several types (person, finance, non-finance business, nonprofit)
+    according to probabilities set in config.
+    '''
+
+    n = int(n)
+    client_type = n*['']
+    random_values = np.random.randint(1,100+1, size=n)/100  # decimal probs
+    for idx, rv in enumerate(random_values):
+        if rv <= config.p_person:  # person
+            client_type[idx] = 'Person'
+        elif config.p_person < rv <= (config.p_person + config.p_fin_business):
+            client_type[idx] = 'Finance Business'
+        elif (config.p_person + config.p_fin_business) < rv <= (config.p_person + config.p_fin_business + config.p_nonfin_business):
+            client_type[idx] = 'Non-finance Business'
+        else:
+            client_type[idx] = 'School/Non-Profit'
+
+    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type]).T, columns=['Client_ID', 'Client_Type'])
+
+    return df
+
+
+if __name__ == '__main__':
+    import setup_bank as m
+
+    n_regions, n_branches, n_clients = 1, 1, 1e3
+
+    # assign branches in two passes:
+    # first pass: branches and regions
+    # second pass: headcount per branch
+    branches_df = m.regions_and_branches(n_regions, n_branches)
+    branches_df, bankers_df = m.assign_personnel_to_branches(branches_df)
+
+    # allocate clients
+    clients_df = m.clients(n_clients)
