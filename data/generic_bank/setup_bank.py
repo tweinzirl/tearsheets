@@ -107,6 +107,38 @@ def clients(n):
     return df
 
 
+def households(df):
+    '''
+    Allocate households given client dataframe. Schools/nonprofits are always in their own household. The remaining clients are grouped together according to the hh_size_distribution in the config (e.g., 60% of households are singletons).
+    '''
+
+    # non-profits are automatically separate households
+    households = df.query('Client_Type == "School/Non-Profit"')
+    households = households.assign(Household_ID = range(1,households.shape[0]+1,1))
+
+    # give people and businesses a change to be grouped
+    person_and_business_df = df.query('Client_Type != "School/Non-Profit"')
+
+    hh_sizes = np.random.choice(config.hh_size_distribution, size=person_and_business_df.shape[0])
+
+    # walk through hh_size and group clients based on size
+    index = 0  # iterate 
+
+    for rv in hh_sizes:  # rv = household size
+        if index > person_and_business_df.shape[0]:  # end of client list
+            break
+
+        next_id = households.Household_ID.max() + 1  # next Household_ID
+        
+        next_hh = person_and_business_df.iloc[index:index+rv]
+        next_hh = next_hh.assign(Household_ID = next_id)  # apply Household_ID
+
+        households = pd.concat([households, next_hh])
+        index += rv  # increment index by household size
+
+    return households
+
+
 if __name__ == '__main__':
     import setup_bank as m
 
@@ -120,3 +152,6 @@ if __name__ == '__main__':
 
     # allocate clients
     clients_df = m.clients(n_clients)
+
+    # group into households
+    hh_df = m.households(clients_df)

@@ -12,3 +12,6 @@ p_fin_business = 0.075
 p_nonfin_business = 0.125
 p_nonprofit = 0.05
 assert (p_person + p_fin_business + p_nonfin_business + p_nonprofit) == 1
+
+# household parmaters
+hh_size_distribution = 6*[1] + [2,2,3,4]
