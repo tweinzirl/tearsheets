@@ -55,21 +55,23 @@ def assign_personnel_to_branches(df):
         config.HEADCOUNT_STD, size=df.shape[0]).astype(int)
 
     df = df.assign(Headcount = headcount_per_branch)
-    df = df.assign(N_RM = lambda x: config.f_RM * x.Headcount)
-    df = df.assign(N_Wealth_Advisor = lambda x: config.f_Wealth_Advisor * x.Headcount)
+    df = df.assign(N_deposit_ofcr = lambda x: config.f_deposit_ofcr * x.Headcount)
+    df = df.assign(N_loan_ofcr = lambda x: config.f_loan_ofcr * x.Headcount)
+    df = df.assign(N_wealth_ofcr = lambda x: config.f_wealth_ofcr * x.Headcount)
 
     df = df.round(0)
 
     # make dataframe of bankers at each branch
     banker_df = pd.DataFrame()
     for idx, row in df.iterrows():
-        n_rm = int(row.N_RM)
-        n_wa = int(row.N_Wealth_Advisor)
+        n_dep = int(row.N_deposit_ofcr)
+        n_rm = int(row.N_loan_ofcr)
+        n_wa = int(row.N_wealth_ofcr)
         br = row.Branch_Number
         n = int(row.Headcount)
 
         data_dict = {'Branch_Number': n*[br],
-                     'Banker_Type': n_rm*['RM'] + n_wa*['Wealth Advisor'],
+                     'Banker_Type': n_dep*['deposit'] + n_rm*['loan'] + n_wa*['wealth'],
                      'Banker_ID': range(1,n+1,1)
                      }
 
@@ -91,18 +93,23 @@ def clients(n):
 
     n = int(n)
     client_type = n*['']
+    product_mix = n*['']
     random_values = np.random.randint(1,100+1, size=n)/100  # decimal probs
+    random_mixes = np.random.choice(config.product_mix, size=n)  # decimal probs
+
     for idx, rv in enumerate(random_values):
         if rv <= config.p_person:  # person
             client_type[idx] = 'Person'
         elif config.p_person < rv <= (config.p_person + config.p_fin_business):
-            client_type[idx] = 'Finance Business'
+            client_type[idx] = 'Business - Finance'
         elif (config.p_person + config.p_fin_business) < rv <= (config.p_person + config.p_fin_business + config.p_nonfin_business):
-            client_type[idx] = 'Non-finance Business'
+            client_type[idx] = 'Business - Other'
         else:
             client_type[idx] = 'School/Non-Profit'
 
-    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type]).T, columns=['Client_ID', 'Client_Type'])
+        product_mix[idx] = random_mixes[idx]
+
+    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix]).T, columns=['Client_ID', 'Client_Type', 'Product_Mix'])
 
     return df
 
@@ -117,25 +124,36 @@ def households(df):
     households = households.assign(Household_ID = range(1,households.shape[0]+1,1))
 
     # give people and businesses a change to be grouped
-    person_and_business_df = df.query('Client_Type != "School/Non-Profit"')
+    person_df = df.query('Client_Type == "Person"')
+    business_df = df.query('Client_Type in ["Business - Finance", "Business - Other"]')
 
-    hh_sizes = np.random.choice(config.hh_size_distribution, size=person_and_business_df.shape[0])
+    hh_sizes = np.random.choice(config.hh_size_distribution, size=df.shape[0])
 
-    # walk through hh_size and group clients based on size
-    index = 0  # iterate 
+    def _allocate_hh(client_df, sizes, households):
+        '''
+        Helper function to allocate client subsets into households.
+        '''
+        index = 0  # iterate 
+        for rv in sizes:  # rv = household size
+            if index > client_df.shape[0]:  # end of client list
+                break
 
-    for rv in hh_sizes:  # rv = household size
-        if index > person_and_business_df.shape[0]:  # end of client list
-            break
+            next_id = households.Household_ID.max() + 1  # next Household_ID
+            
+            next_hh = client_df.iloc[index:index+rv]
+            next_hh = next_hh.assign(Household_ID = next_id)  # apply Household_ID
 
-        next_id = households.Household_ID.max() + 1  # next Household_ID
-        
-        next_hh = person_and_business_df.iloc[index:index+rv]
-        next_hh = next_hh.assign(Household_ID = next_id)  # apply Household_ID
+            households = pd.concat([households, next_hh])
+            index += rv  # increment index by household size
 
-        households = pd.concat([households, next_hh])
-        index += rv  # increment index by household size
+        return households
 
+    # Person clients
+    households = _allocate_hh(person_df, hh_sizes, households)
+
+    # Business clients
+    households = _allocate_hh(business_df, hh_sizes[::-1], households)
+    
     return households
 
 
