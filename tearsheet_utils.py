@@ -479,7 +479,7 @@ def format_template(template, bio, table, client='client', banker='banker',
     Format tearsheet template.
     '''
 
-    employer = table['employer']['a']
+    employer = table.get('employer', {}).get('a', '')
 
     formatted_table = '<table class="center" style="border: 1px solid;">'  # table start
 
@@ -552,4 +552,11 @@ if __name__ == '__main__':
     #html, output_path = m.write_tearsheet_html('Robert King', bio1, table1)
     html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
     html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
+    html, output_path = m.generate_tearsheet('Aphrodite Greek', vectordb)
+    html, output_path = m.generate_tearsheet('Hanna Smith', vectordb)
+    html, output_path = m.generate_tearsheet('Helen Troy', vectordb)
+    html, output_path = m.generate_tearsheet('Jared Livinglife', vectordb)
+    html, output_path = m.generate_tearsheet('Jerry Smith', vectordb)
+    html, output_path = m.generate_tearsheet('Mariann Avocado', vectordb)
+    html, output_path = m.generate_tearsheet('Zeus Manly', vectordb)
     #html, output_path = m.write_tearsheet_html('Julia Harpman', bio3, table3)
