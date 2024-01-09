@@ -157,6 +157,34 @@ def households(df):
     return households
 
 
+def accounts():
+    '''
+    Table of account categories (DLW) and account types. Frequencies for individuals and organizations are defined in config.py.
+    '''
+    # set_trace()
+    data_dict = {'Account_Category': 3*['Deposits'] + 5*['Loans'] + 2*['Wealth'],
+                 'Account_Type': ['CHK', 'SV', 'CD'] + ['SFR', 'HELOC', 'MF', 'CRE', 'LOC'] + ['FRIM', 'FRS'],
+                 'Account_Description': ['Checking', 'Saving', 'Certificate of Deposit'] +
+                                        ['Single Family Residential', 'Home Equity Line of Credit', 'Multifamily',
+                                         'Commercial Real Estate', 'Line of Credit'] +
+                                        ['FRIM', 'FRS']
+                }
+
+    accts_df = pd.DataFrame(data_dict)
+    return(accts_df)
+
+
+# TODO
+def assign_accounts_to_clients(df):
+    '''
+    Calculates bankers per each branch. Returns to dataframes:
+    1. client-level table with number of accounts per each product type
+    2. account-level table with unique client id
+    '''
+
+    return
+
+
 if __name__ == '__main__':
     import setup_bank as m
 
