@@ -20,3 +20,22 @@ product_mix = 6*['D'] + 3*['DL'] + 2*['DLW'] + ['L'] + ['LW'] + 2*['W']
 
 # household parmaters
 hh_size_distribution = 6*[1] + [2,2,3,4]
+
+# account frequencies for individuals
+# TODO use only one dict for both indiv and org
+f_indiv_accts = {'Deposits': {'CHK': 0.60, 'SV': .15, 'CD': .25}, 
+                 'Loans': {'SFR': 0.80, 'HELOC': 0.15, 'MF': 0, 'CRE': 0.05, 'LOC': 0},
+                 'Wealth': {'FRIM': 0.70, 'FRS': 0.30}}
+# TODO use a loop for the asserts
+assert round(sum(f_indiv_accts['Deposits'].values()), 1) == 1
+assert round(sum(f_indiv_accts['Loans'].values()), 1) == 1
+assert round(sum(f_indiv_accts['Wealth'].values()), 1) == 1
+
+# account frequencies for organizations
+f_org_accts = {'Deposits': {'CHK': 0.70, 'SV': .20, 'CD': .10}, 
+               'Loans': {'SFR': 0.15, 'HELOC': 0, 'MF': 0.25, 'CRE': 0.55, 'LOC': 0.05}, 
+               'Wealth': {'FRIM': 0.70, 'FRS': 0.30}
+              }
+assert round(sum(f_org_accts['Deposits'].values()), 1) == 1
+assert round(sum(f_org_accts['Loans'].values()), 1) == 1
+assert round(sum(f_org_accts['Wealth'].values()), 1) == 1
