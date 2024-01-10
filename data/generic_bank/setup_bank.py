@@ -93,22 +93,13 @@ def clients(n):
     '''
 
     n = int(n)
-    client_type = n*['']
-    product_mix = n*['']
-    random_values = np.random.randint(1,100+1, size=n)/100  # decimal probs
-    random_mixes = np.random.choice(config.product_mix, size=n)  # decimal probs
-
-    for idx, rv in enumerate(random_values):
-        if rv <= config.p_person:  # person
-            client_type[idx] = 'Person'
-        elif config.p_person < rv <= (config.p_person + config.p_fin_business):
-            client_type[idx] = 'Business - Finance'
-        elif (config.p_person + config.p_fin_business) < rv <= (config.p_person + config.p_fin_business + config.p_nonfin_business):
-            client_type[idx] = 'Business - Other'
-        else:
-            client_type[idx] = 'School/Non-Profit'
-
-        product_mix[idx] = random_mixes[idx]
+    # random_values = np.random.randint(1,100+1, size=n)/100  # decimal probs
+    client_type = np.random.choice(
+        ['Person', 'Business - Finance', 'Business - Other', 'School/Non-Profit'],
+        p=[config.p_person, config.p_fin_business, config.p_nonfin_business, config.p_nonprofit],
+        size=n
+        )
+    product_mix = np.random.choice(config.product_mix, size=n)  # decimal probs
 
     df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix]).T, columns=['Client_ID', 'Client_Type', 'Product_Mix'])
 
