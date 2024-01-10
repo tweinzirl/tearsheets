@@ -157,11 +157,11 @@ def households(df):
     return households
 
 
-def accounts():
+def account_types():
     '''
     Table of account categories (DLW) and account types. Frequencies for individuals and organizations are defined in config.py.
     '''
-    # set_trace()
+    # TODO create this table from config dict instead
     data_dict = {'Account_Category': 3*['Deposits'] + 5*['Loans'] + 2*['Wealth'],
                  'Account_Type': ['CHK', 'SV', 'CD'] + ['SFR', 'HELOC', 'MF', 'CRE', 'LOC'] + ['FRIM', 'FRS'],
                  'Account_Description': ['Checking', 'Saving', 'Certificate of Deposit'] +
@@ -174,15 +174,51 @@ def accounts():
     return(accts_df)
 
 
-# TODO
 def assign_accounts_to_clients(df):
     '''
-    Calculates bankers per each branch. Returns to dataframes:
-    1. client-level table with number of accounts per each product type
-    2. account-level table with unique client id
+    Use clients(n) as input.
+    Assigns accounts to clients based on their product mix. Returns account-level table with unique account id. Use account frequencies defined in config.py, separate for Individual / Organizations. 
     '''
+    accounts_df = pd.DataFrame()
+    for idx, row in df.iterrows():
+        # TODO assumes 1 acct per category - can randomly select multiple accounts here
+        # can sample from distr with mean 2 std 1, threshold of min 1 if acct cat is present
+        n_D=0; n_L=0; n_W=0
+        if 'D' in row.Product_Mix: n_D+=1
+        if 'L' in row.Product_Mix: n_L+=1
+        if 'W' in row.Product_Mix: n_W+=1
+        cl = row.Client_ID
+        clt = row.Client_Type
+        n = int(sum([n_D, n_L, n_W]))
+        
+        data_dict = {'Client_ID': n*[cl],
+                     'Client_Type': n*[clt],  # for debugging
+                     'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
+                     'Account_ID': range(1,n+1,1)
+                     }
+        row_df = pd.DataFrame(data_dict)
+        # TODO fix frequencies for f_accounts from Sergey's query; also use one dict for them all
+        acct_val = []
+        for idx, row_ in row_df.iterrows():
+            if row.Client_Type == 'Person':
+                acct_val_sel = np.random.choice(
+                    list(config.f_indiv_accts[row_['Account_Category']].keys()), 
+                    size=1, p=list(config.f_indiv_accts[row_['Account_Category']].values()))
+            else:
+                acct_val_sel = np.random.choice(
+                    list(config.f_org_accts[row_['Account_Category']].keys()), 
+                    size=1, p=list(config.f_org_accts[row_['Account_Category']].values()))
+            acct_val.append(acct_val_sel[0])
+        row_df = row_df.assign(Account_Type = acct_val)
+        accounts_df = pd.concat([accounts_df, row_df])
 
-    return
+        
+    # unique account id per acct category (i.e. D#, L#, W#)
+    n_acct_cat = accounts_df.groupby('Account_Category').size()
+    for idx_cat in accounts_df['Account_Category'].unique():
+        accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_ID'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
+ 
+    return(accounts_df)
 
 
 if __name__ == '__main__':
