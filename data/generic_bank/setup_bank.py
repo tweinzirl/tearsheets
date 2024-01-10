@@ -15,6 +15,7 @@ Generate data for a generic bank:
 
 import numpy as np
 import pandas as pd
+import itertools
 
 import config
 
@@ -111,12 +112,12 @@ def clients(n):
 
     df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix]).T, columns=['Client_ID', 'Client_Type', 'Product_Mix'])
 
-    return df
+    return df.astype({'Client_ID': int})
 
 
 def households(df):
     '''
-    Allocate households given client dataframe. Schools/nonprofits are always in their own household. The remaining clients are grouped together according to the hh_size_distribution in the config (e.g., 60% of households are singletons).
+    Allocate households given client dataframe `df`. Schools/nonprofits are always in their own household. The remaining clients are grouped together according to the hh_size_distribution in the config (e.g., 60% of households are singletons).
     '''
 
     # non-profits are automatically separate households
@@ -157,6 +158,64 @@ def households(df):
     return households
 
 
+def links(clients_df, households_df):
+    '''
+    Generate links between household members:
+      - 'Person' households with >1 member get Spouse and/or Parent-Child links. The first pair of clients are the spouses: only one Spouse link is made per household. The remaining members are linked as parent-child. These links are designated without reference to client age or gender fields.
+      - 'Business' households with >1 member get 'Same Business' links.
+      - 'Person' and 'Business' households can be connected with 'Business Owner' links.
+    '''
+    hh_size = households_df.groupby('Household_ID').size()  # hh_size
+    hh_members = households_df.groupby('Household_ID')['Client_ID'].unique()  # hh members
+    client_types = households_df.groupby('Household_ID')['Client_Type'].apply(lambda x: ', '.join(np.unique(x)))  # client types
+
+    links_df = pd.DataFrame()
+
+    # person_hh
+    for hh in households_df.Household_ID.unique():
+        if hh_size[hh] == 1: continue
+        link_id_pairs = np.array( list(itertools.combinations(hh_members[hh], 2)), dtype='int' )
+
+        # link_type: first link is spouse, other links are Parent-Child
+        if client_types[hh] == "Person":
+            link_type = ['Spouse'] + (link_id_pairs.shape[0]-1)*['Parent-Child']
+        else:
+            link_type = link_id_pairs.shape[0]*['Same Business']
+
+        # dataframe
+        dict_ = {'Link_ID': range(0, link_id_pairs.shape[0]),
+            'Household_ID': link_id_pairs.shape[0]*[hh],
+            'Client_1': link_id_pairs[:,0], 'Client_2': link_id_pairs[:,1],
+            'Link_Type': link_type
+            }
+        df_ = pd.DataFrame(dict_)
+        links_df = pd.concat([links_df, df_], ignore_index=True)
+
+    # add 'Business Owner' links
+    hh_sizes_and_types = pd.concat([hh_size, client_types], axis=1)
+    hh_sizes_and_types.columns = ['HH_size', 'Client_Type']
+
+    # Link subset of Person and Business - Other households
+    n_business_owner_links = int(config.f_business_owner_link * clients_df.shape[0])  # 5% of customers
+    person_id = hh_sizes_and_types.query('HH_size == 1 & Client_Type == "Person"').index[:n_business_owner_links]
+    bus_id = hh_sizes_and_types.query('HH_size == 1 & Client_Type == "Business - Other"').index[:n_business_owner_links]
+
+    for person_, bus_ in zip(person_id, bus_id):
+        dict_ = {'Link_ID': [1],
+            'Household_ID': [-1],
+            'Client_1': [person_], 'Client_2': [bus_],
+            'Link_Type': ['Business Owner'] 
+            }
+        df_ = pd.DataFrame(dict_)
+        links_df = pd.concat([links_df, df_], ignore_index=True)
+        
+
+    # set Link_ID
+    links_df.Link_ID = range(0, links_df.shape[0], 1)
+
+    return links_df
+
+
 if __name__ == '__main__':
     import setup_bank as m
 
@@ -172,4 +231,7 @@ if __name__ == '__main__':
     clients_df = m.clients(n_clients)
 
     # group into households
-    hh_df = m.households(clients_df)
+    households_df = m.households(clients_df)
+
+    # links
+    links_df = m.links(clients_df, households_df)

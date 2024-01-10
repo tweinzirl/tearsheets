@@ -20,3 +20,6 @@ product_mix = 6*['D'] + 3*['DL'] + 2*['DLW'] + ['L'] + ['LW'] + 2*['W']
 
 # household parmaters
 hh_size_distribution = 6*[1] + [2,2,3,4]
+
+# linking paramaters
+f_business_owner_link = 0.05
