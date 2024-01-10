@@ -21,6 +21,9 @@ product_mix = 6*['D'] + 3*['DL'] + 2*['DLW'] + ['L'] + ['LW'] + 2*['W']
 # household parmaters
 hh_size_distribution = 6*[1] + [2,2,3,4]
 
+# linking paramaters
+f_business_owner_link = 0.05
+
 # account frequencies for individuals
 # TODO use only one dict for both indiv and org
 f_indiv_accts = {'Deposits': {'CHK': 0.60, 'SV': .15, 'CD': .25}, 
