@@ -20,8 +20,7 @@ from langchain.schema.runnable import RunnablePassthrough
 from langchain.vectorstores import Chroma
 
 # Evaluation
-from ragas.metrics import faithfulness, answer_relevancy, context_relevancy
-from ragas.langchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
+import ragas_evaluations as rag
 
 # authentication
 from dotenv import load_dotenv, find_dotenv
@@ -56,11 +55,14 @@ def create_or_load_vectorstore(path, documents=[],
 
 
 def qa_metadata_filter(q, vectordb, filters, top_k=10,
-    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0),
+    with_eval = None):
     '''
     Perform Q&A given a question `q`, vectorstore `vectordb`, and language
     model `llm`. The `top_k` most relevant documents meeting the requirements
     in `filter` are considered.
+    if Ragas metrics passed to `with_eval`, the result dictionary will contain
+    evaluation scores as well.
     '''
 
     # embed filter in retriever
@@ -73,21 +75,9 @@ def qa_metadata_filter(q, vectordb, filters, top_k=10,
     qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever, return_source_documents = True,)
     result = qa_chain({"query": q})
 
-    
-    # Ragas Evaluation
-    eval_metrics_list = [faithfulness, answer_relevancy, context_relevancy]
-    # eval_metrics_list = [answer_relevancy]
-    # make eval chains
-    eval_chains = {
-        metric.name: RagasEvaluatorChain(metric=metric) 
-        for metric in eval_metrics_list
-    }  
-    # metric_tracker = {}
-    for metric, eval_chain in eval_chains.items():
-        metric_name = f'{metric}_score'
-        result[metric_name]= eval_chain({'query':q,
-                                                 'source_documents':result['source_documents'],
-                                                 'result':result['result']})[metric_name]
+    if with_eval:
+        # Ragas Evaluation
+        result = rag.ragas_eval_qa
     
     
     
@@ -192,7 +182,7 @@ def load_persona_html():
         client_name = toks[:-1]
         doc_type = toks[-1][:-5]
         # manually edit metadata
-        doc[0].metadata['client_name'] = ' '.join(client_name)[5:]
+        doc[0].metadata['client_name'] = ' '.join(client_name)
         doc[0].metadata['doc_type'] = doc_type
         docs.extend(doc)
 
