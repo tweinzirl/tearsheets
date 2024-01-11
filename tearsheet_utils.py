@@ -47,15 +47,15 @@ def create_or_load_vectorstore(path, documents=[],
             embedding_function=embedding_function)
     else:
         # clean out existing data
-        for f in glob.glob(os.path.join(path, '**', '*.*'), recursive=True):
-            os.remove(f)
-        vectordb = Chroma.from_documents(documents, embedding_function,
-            persist_directory=path)
-
+        # for f in glob.glob(os.path.join(path, '**', '*.*'), recursive=True):
+        #     os.remove(f)
+        
+        vectordb = Chroma.from_documents(documents, embedding_function)
+    print('Vectordb done...')
     return vectordb
 
 
-def qa_metadata_filter(q, vectordb, filter, top_k=10,
+def qa_metadata_filter(q, vectordb, filters, top_k=10,
     llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
     '''
     Perform Q&A given a question `q`, vectorstore `vectordb`, and language
@@ -66,14 +66,33 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
     # embed filter in retriever
     retriever = vectordb.as_retriever(
         search_kwargs={"k": top_k,
-                       "filter": filter,})
+                       "filter": filters,})
 
     # """
     # run qa chain with retriever
-    qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
+    qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever, return_source_documents = True,)
     result = qa_chain({"query": q})
 
-    return result['result']
+    
+    # Ragas Evaluation
+    eval_metrics_list = [faithfulness, answer_relevancy, context_relevancy]
+    # eval_metrics_list = [answer_relevancy]
+    # make eval chains
+    eval_chains = {
+        metric.name: RagasEvaluatorChain(metric=metric) 
+        for metric in eval_metrics_list
+    }  
+    # metric_tracker = {}
+    for metric, eval_chain in eval_chains.items():
+        metric_name = f'{metric}_score'
+        result[metric_name]= eval_chain({'query':q,
+                                                 'source_documents':result['source_documents'],
+                                                 'result':result['result']})[metric_name]
+    
+    
+    
+    # return result['result']
+    return result
     # '''
 
     '''
@@ -173,7 +192,7 @@ def load_persona_html():
         client_name = toks[:-1]
         doc_type = toks[-1][:-5]
         # manually edit metadata
-        doc[0].metadata['client_name'] = ' '.join(client_name)
+        doc[0].metadata['client_name'] = ' '.join(client_name)[5:]
         doc[0].metadata['doc_type'] = doc_type
         docs.extend(doc)
 
@@ -519,16 +538,16 @@ if __name__ == '__main__':
     for d in junk: print(d.metadata)
 
     # test filter 2: match to lists of values with logical AND
-    # filter_ = {'$and': [{'client_name': {'$in': ['Robert King']}},
-    #         {'doc_type': {'$in': ['linkedin', 'relsci', 'equilar']}}]}
-    # junk = vectordb.similarity_search('summarize the current employers of all people', k=99, filter=filter_)
-    # for d in junk: print(d.metadata)
+    filter_ = {'$and': [{'client_name': {'$in': ['Robert King']}},
+            {'doc_type': {'$in': ['linkedin', 'relsci', 'equilar']}}]}
+    junk = vectordb.similarity_search('summarize the current employers of all people', k=99, filter=filter_)
+    for d in junk: print(d.metadata)
 
     # test create_filter
     filter1 = m.create_filter('Robert King', 'all')
-    # filter2 = m.create_filter('Robert King', 'linkedin')
-    # filter3 = m.create_filter('Robert King', ['linkedin', 'google'])
-    # filter4 = m.create_filter('all', ['google'])
+    filter2 = m.create_filter('Robert King', 'linkedin')
+    filter3 = m.create_filter('Robert King', ['linkedin', 'google'])
+    filter4 = m.create_filter('all', ['google'])
 
     # test Q&A for filters
     q1 = 'What is noteworthy about Robert King?'
@@ -536,29 +555,29 @@ if __name__ == '__main__':
     q3 = 'What important roles does Robert King have in the community?'
     q4 = 'Summarize all the recent news articles based on their titles'
 
-    r1 = m.qa_metadata_filter(q1, vectordb, filter1)
-    # r2 = m.qa_metadata_filter(q2, vectordb, filter2)
-    # r3 = m.qa_metadata_filter(q3, vectordb, filter3)
-    # r4 = m.qa_metadata_filter(q4, vectordb, filter4)
+    r1, m1 = m.qa_metadata_filter(q1, vectordb, filter1)
+    r2 = m.qa_metadata_filter(q2, vectordb, filter1)
+    r3 = m.qa_metadata_filter(q3, vectordb, filter3)
+    r4 = m.qa_metadata_filter(q4, vectordb, filter4)
 
-    # # test tearsheet bio functions separately
-    # output1 = m.tearsheet_bio_1('Robert King', vectordb)
-    # output2 = m.tearsheet_bio_2('Robert King', output1)
-    # output3 = m.tearsheet_bio_3(output2)
+    # test tearsheet bio functions separately
+    output1 = m.tearsheet_bio_1('Robert King', vectordb)
+    output2 = m.tearsheet_bio_2('Robert King', output1)
+    output3 = m.tearsheet_bio_3(output2)
 
-    # # test tearsheet bio
-    # bio1 = m.tearsheet_bio('Robert King', vectordb)
-    # bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
-    # bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
+    # test tearsheet bio
+    bio1 = m.tearsheet_bio('Robert King', vectordb)
+    bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
+    bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
 
-    # # test tearsheet table functions separately
-    # table1 = m.tearsheet_table('Robert King', vectordb)
-    # table2 = m.tearsheet_table('Velvet Throat', vectordb)
-    # table3 = m.tearsheet_table('Julia Harpman', vectordb)
+    # test tearsheet table functions separately
+    table1 = m.tearsheet_table('Robert King', vectordb)
+    table2 = m.tearsheet_table('Velvet Throat', vectordb)
+    table3 = m.tearsheet_table('Julia Harpman', vectordb)
 
-    # # write tearsheet
-    # html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
-    # #html, output_path = m.write_tearsheet_html('Robert King', bio1, table1)
-    # html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
-    # html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
-    # #html, output_path = m.write_tearsheet_html('Julia Harpman', bio3, table3)
+    # write tearsheet
+    html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
+    #html, output_path = m.write_tearsheet_html('Robert King', bio1, table1)
+    html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
+    html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
+    #html, output_path = m.write_tearsheet_html('Julia Harpman', bio3, table3)
