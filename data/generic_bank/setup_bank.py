@@ -16,6 +16,8 @@ Generate data for a generic bank:
 import numpy as np
 import pandas as pd
 import itertools
+import datetime
+import faker
 
 import config
 
@@ -90,6 +92,14 @@ def clients(n):
     '''
     Allocate clients of several types (person, finance, non-finance business, nonprofit)
     according to probabilities set in config.
+
+    Return several datapoints:
+        - Client_ID
+        - Client_Type
+        - Product_Mix
+        - Client_Name
+        - Street_Address (generate state/city later to be consistent with region)
+        - Birthday (for people)
     '''
 
     n = int(n)
@@ -101,7 +111,26 @@ def clients(n):
         )
     product_mix = np.random.choice(config.product_mix, size=n)  # decimal probs
 
-    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix]).T, columns=['Client_ID', 'Client_Type', 'Product_Mix'])
+    fake = faker.Faker()
+
+    # client_name/address
+    name, address, birthday = n*[''], n*[''], n*['']
+    for i in range(n):
+        if client_type[i] == 'Person':
+            name[i] = fake.name()
+            bday = fake.date_between(datetime.datetime(1945,1,1), datetime.datetime(2023,1,1))
+            birthday[i] = bday.strftime('%m/%d')
+        elif client_type[i].find('Business') != -1:
+            name[i] = fake.company()
+            birthday[i] = np.nan
+        else:
+            name[i] = fake.company() + ' School'
+            birthday[i] = np.nan
+        
+        address[i] = fake.street_address()  # just street address, apply region later
+     
+
+    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix, name, address, birthday]).T, columns=['Client_ID', 'Client_Type', 'Product_Mix', 'Client_Name', 'Street_Address', 'Birthday'])
 
     return df.astype({'Client_ID': int})
 
@@ -243,7 +272,7 @@ def assign_accounts_to_clients(df):
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],  # for debugging
                      'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
-                     'Account_ID': range(1,n+1,1)
+                     'Account_ID': np.array(range(1,n+1,1), dtype=str)
                      }
         row_df = pd.DataFrame(data_dict)
         # TODO fix frequencies for f_accounts from Sergey's query; also use one dict for them all
@@ -289,3 +318,15 @@ if __name__ == '__main__':
 
     # links
     links_df = m.links(clients_df, households_df)
+
+    # accounts
+    accounts_df = m.assign_accounts_to_clients(clients_df)
+
+    #odo:
+    # account to banker - in existing account table
+    # accounts table - add opening bal column
+    # faker data - address, first name, last name, date of birth, banker names, counterparty names
+    # counterparties
+    # transactions 
+    # write db and evaluate size
+    # host on hugging face
