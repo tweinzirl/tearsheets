@@ -235,6 +235,7 @@ def links(clients_df, households_df):
 
     return links_df
 
+
 def account_types():
     '''
     Table of account categories (DLW) and account types. Frequencies for individuals and organizations are defined in config.py.
@@ -248,8 +249,8 @@ def account_types():
                                         ['FRIM', 'FRS']
                 }
 
-    accts_df = pd.DataFrame(data_dict)
-    return(accts_df)
+    acct_types_df = pd.DataFrame(data_dict)
+    return(acct_types_df)
 
 
 def assign_accounts_to_clients(df):
@@ -259,8 +260,10 @@ def assign_accounts_to_clients(df):
     '''
     accounts_df = pd.DataFrame()
     for idx, row in df.iterrows():
+        # identify number of DLW accounts per client
         # TODO assumes 1 acct per category - can randomly select multiple accounts here
         # can sample from distr with mean 2 std 1, threshold of min 1 if acct cat is present
+        # if idx != 18: continue
         n_D=0; n_L=0; n_W=0
         if 'D' in row.Product_Mix: n_D+=1
         if 'L' in row.Product_Mix: n_L+=1
@@ -268,29 +271,38 @@ def assign_accounts_to_clients(df):
         cl = row.Client_ID
         clt = row.Client_Type
         n = int(sum([n_D, n_L, n_W]))
-        
+
+        # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],  # for debugging
                      'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
                      'Account_ID': np.array(range(1,n+1,1), dtype=str)
                      }
         row_df = pd.DataFrame(data_dict)
-        # TODO fix frequencies for f_accounts from Sergey's query; also use one dict for them all
-        acct_val = []
+
+        # select acct type based on mix and frequency defined in config (separate for individuals / orgs)
+        # assign opening acct balance based on avg/sd defined in config (separate for individuals / orgs)
+        acct_val = []; bal_val = []
         for idx, row_ in row_df.iterrows():
             if row.Client_Type == 'Person':
                 acct_val_sel = np.random.choice(
                     list(config.f_indiv_accts[row_['Account_Category']].keys()), 
                     size=1, p=list(config.f_indiv_accts[row_['Account_Category']].values()))
+                bal_val_sel = round(np.random.normal(loc=config.bal_indiv_accts[row_['Account_Category']][acct_val_sel[0]][0],
+                                               scale=config.bal_indiv_accts[row_['Account_Category']][acct_val_sel[0]][1], 
+                                               size=1)[0], 1)
             else:
                 acct_val_sel = np.random.choice(
                     list(config.f_org_accts[row_['Account_Category']].keys()), 
                     size=1, p=list(config.f_org_accts[row_['Account_Category']].values()))
+                bal_val_sel = round(np.random.normal(loc=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][0],
+                                               scale=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][1], 
+                                               size=1)[0], 1)
             acct_val.append(acct_val_sel[0])
-        row_df = row_df.assign(Account_Type = acct_val)
+            bal_val.append(bal_val_sel)
+        row_df = row_df.assign(Account_Type = acct_val, Open_Balance = bal_val)
         accounts_df = pd.concat([accounts_df, row_df])
 
-        
     # unique account id per acct category (i.e. D#, L#, W#)
     n_acct_cat = accounts_df.groupby('Account_Category').size()
     for idx_cat in accounts_df['Account_Category'].unique():
