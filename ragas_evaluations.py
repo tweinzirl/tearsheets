@@ -4,6 +4,7 @@ Created on Thu Jan 11 13:18:11 2024
 
 @author: local_ergo
 """
+import numpy as np
 
 # Evaluation
 from ragas.metrics import *
@@ -20,9 +21,10 @@ def ragas_eval_qa(query, result, eval_metrics_list = [faithfulness, answer_relev
     
     for metric, eval_chain in eval_chains.items():
         metric_name = f'{metric}_score'
-        result[metric_name]= eval_chain({'query':query,
+        result[metric_name]= round(eval_chain({'query':query,
                                                  'source_documents':result['source_documents'],
                                                  'result':result['result']})[metric_name]
+                                   , 2)
     # Bar plot of the metrics 
     if viz:
         plot_metric = {k:result[k] for k in [metric.name + '_score' for metric in eval_metrics_list]}
@@ -54,10 +56,63 @@ def plot_metrics_with_values(metrics_dict, title='RAG Metrics'):
     plt.xlim(0, 1)  # Setting the x-axis limit to be from 0 to 1
     plt.show()
     
+
+def ragas_eval_qa_avg(eval_questions, qa,  eval_metrics_list = [faithfulness, answer_relevancy, context_relevancy], viz = False):
+    """
+    Parameters
+    ----------
+    eval_questions : List. List of questions to evaluate the model based on
+
+    qa : Langchain RAG chain. `return_source_documents` must be True
+        
+    eval_metrics_list : List, List of RAGAS metrics. The default is [faithfulness, answer_relevancy, context_relevancy].
+    viz : Boolean, generated a bar plto of average scores for each metric. The default is False.
+
+    Returns
+    -------
+    eval_answers : list of dictionaries. Each component of the list is the result returned from qa chain per question
+    metric_tracker : list, list of metric scores.
+
+    """
+
+    # list of answers to the questions, along with their source document for evaliation
+    eval_answers = [{k:qa(q)[k] for k in ['query', 'result', 'source_documents']} for q in eval_questions]
     
+    # make eval chains
+    eval_chains = {
+        m.name: RagasEvaluatorChain(metric=m) 
+        for m in eval_metrics_list
+    }   
+    
+    metric_tracker = {}
+    for metric, eval_chain in eval_chains.items():
+        metric_name = f'{metric}_score'
+        metric_tracker[metric_name] = []
+        for eval_answer in eval_answers:
+            metric_tracker[metric_name].append(eval_chain({'query':eval_answer['query'], 'source_documents':eval_answer['source_docuemtns'], 'result':eval_answer['result']})[metric_name])
+        metric_tracker[f'{metric_name}_avg'] = np.mean(metric_tracker[metric_name]) # Calculating mean over each metric for an overall assesment
+    
+    if viz:
+        metric_avg = {k:metric_tracker[k] for k in [metric.name + '_score_avg' for metric in eval_metrics_list]}
+        plot_metrics_with_values(metric_avg, title = 'Avg RAG Metrics')
+    
+    return eval_answers, metric_tracker    
+
+
+
 if __name__ == '__main__':
     import ragas_evaluations as m
     
     m.plot_metrics_with_values({'faithfulness_score': 1.0,
                               'answer_relevancy_score': 0.9468557283238227,
                               'context_relevancy_score': 0.025}, "Base Retriever ragas Metrics")
+    
+    
+    # Generating a set of sample questions and answers to test score aggregation
+    eval_questions = [
+        'Where does Jerry work?',
+        'What industry or industries is Jerry involved in?',
+        'Is Jerry a charitable person?',
+        'Who are Jerrys family memebers?',
+        ]
+    
