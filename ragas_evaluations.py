@@ -12,6 +12,18 @@ from ragas.langchain import RagasEvaluatorChain # langchain chain wrapper to con
 import matplotlib.pyplot as plt
 
 def ragas_eval_qa(query, result, eval_metrics_list = [faithfulness, answer_relevancy, context_relevancy], viz = False):
+    """
+    Parameters
+    ----------
+    query : string, question.
+    result : dictionary, result from qa_chain
+    eval_metrics_list : List, list of Ragas metrics. The default is [faithfulness, answer_relevancy, context_relevancy].
+    viz : Boolean, If true, the function generated and shows a bar plot of the metrics scores. The default is False.
+
+    Returns
+    -------
+    result : dictionary, original `result` variable with metrics score added as new fields. 
+    """
 
     # make eval chains
     eval_chains = {
