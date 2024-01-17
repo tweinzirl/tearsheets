@@ -21,6 +21,8 @@ import faker
 
 import config
 
+fake = faker.Faker()
+
 
 def regions(n):
    '''Return n distinct regions and regional managers'''
@@ -75,7 +77,8 @@ def assign_personnel_to_branches(df):
 
         data_dict = {'Branch_Number': n*[br],
                      'Banker_Type': n_dep*['deposit'] + n_rm*['loan'] + n_wa*['wealth'],
-                     'Banker_ID': range(1,n+1,1)
+                     'Banker_ID': range(1,n+1,1),
+                     'Banker_Name': [fake.first_name() + ' ' + fake.last_name() for _ in range(n)],
                      }
 
         row_df = pd.DataFrame(data_dict)
@@ -110,8 +113,6 @@ def clients(n):
         size=n
         )
     product_mix = np.random.choice(config.product_mix, size=n)  # decimal probs
-
-    fake = faker.Faker()
 
     # client_name/address
     name, address, birthday = n*[''], n*[''], n*['']
