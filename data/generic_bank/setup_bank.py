@@ -331,6 +331,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
 
 if __name__ == '__main__':
     import setup_bank as m
+    import config
     # from importlib import reload
 
     # set random seed
