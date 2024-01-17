@@ -254,11 +254,22 @@ def account_types():
     return(acct_types_df)
 
 
-def assign_accounts_to_clients(df):
+def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     '''
     Use clients(n) as input.
     Assigns accounts to clients based on their product mix. Returns account-level table with unique account id. Use account frequencies defined in config.py, separate for Individual / Organizations. 
     '''
+    # assign inputs
+    df = clients_df
+    
+    # prep frequencies for assigning bankers to accounts (given original branch headcounts)
+    l_bankers = dict()
+    for i in bankers_df.Banker_Type.unique(): l_bankers[i] = bankers_df.query(f'Banker_Type == "{i}"')['Banker_ID']
+    n_bankers = bankers_df[['Banker_Type', 'Banker_ID']].groupby(['Banker_Type']).count().to_dict()['Banker_ID']
+    f_bankers = dict()
+    for i in n_bankers: f_bankers[i] = n_bankers[i]*[1 / n_bankers[i]]
+
+    # prep accounts data frame
     accounts_df = pd.DataFrame()
     for idx, row in df.iterrows():
         # identify number of DLW accounts per client
@@ -277,13 +288,14 @@ def assign_accounts_to_clients(df):
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],  # for debugging
                      'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
-                     'Account_ID': np.array(range(1,n+1,1), dtype=str)
+                     'Account_Nr': np.array(range(1,n+1,1), dtype=str)
                      }
         row_df = pd.DataFrame(data_dict)
 
         # select acct type based on mix and frequency defined in config (separate for individuals / orgs)
         # assign opening acct balance based on avg/sd defined in config (separate for individuals / orgs)
-        acct_val = []; bal_val = []
+        # assign bankers to accounts (equal probabilies per account category, no individual / org split)
+        acct_val = []; bal_val = []; banker_val = []
         for idx, row_ in row_df.iterrows():
             if row.Client_Type == 'Person':
                 acct_val_sel = np.random.choice(
@@ -299,32 +311,39 @@ def assign_accounts_to_clients(df):
                 bal_val_sel = round(np.random.normal(loc=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][0],
                                                scale=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][1], 
                                                size=1)[0], 1)
+            # no individual / org split
+            banker_val_sel = np.random.choice(
+                list(l_bankers[row_['Account_Category']]),
+                size=1, p=f_bankers[row_['Account_Category']])
             acct_val.append(acct_val_sel[0])
             bal_val.append(bal_val_sel)
-        row_df = row_df.assign(Account_Type = acct_val, Open_Balance = bal_val)
+            banker_val.append(banker_val_sel[0])
+        row_df = row_df.assign(Account_Type = acct_val, Open_Balance = bal_val, Banker_ID = banker_val)
         accounts_df = pd.concat([accounts_df, row_df])
 
     # unique account id per acct category (i.e. D#, L#, W#)
     n_acct_cat = accounts_df.groupby('Account_Category').size()
     for idx_cat in accounts_df['Account_Category'].unique():
-        accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_ID'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
+        accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
  
     return(accounts_df)
 
 
 if __name__ == '__main__':
     import setup_bank as m
+    # from importlib import reload
 
-    n_regions, n_branches, n_clients = 1, 1, 1e3
+    # set random seed
+    np.random.seed(42)
 
     # assign branches in two passes:
     # first pass: branches and regions
     # second pass: headcount per branch
-    branches_df = m.regions_and_branches(n_regions, n_branches)
+    branches_df = m.regions_and_branches(config.n_regions, config.n_branches)
     branches_df, bankers_df = m.assign_personnel_to_branches(branches_df)
 
     # allocate clients
-    clients_df = m.clients(n_clients)
+    clients_df = m.clients(config.n_clients)
 
     # group into households
     households_df = m.households(clients_df)
@@ -333,11 +352,11 @@ if __name__ == '__main__':
     links_df = m.links(clients_df, households_df)
 
     # accounts
-    accounts_df = m.assign_accounts_to_clients(clients_df)
+    accounts_df = m.assign_accounts_to_clients_and_bankers(clients_df, bankers_df)
 
-    #odo:
-    # account to banker - in existing account table
-    # accounts table - add opening bal column
+    # todo:
+    # clients table - add join date
+    # accounts table - add account open date
     # faker data - address, first name, last name, date of birth, banker names, counterparty names
     # counterparties
     # transactions 
