@@ -76,7 +76,7 @@ def assign_personnel_to_branches(df):
         n = int(row.Headcount)
 
         data_dict = {'Branch_Number': n*[br],
-                     'Banker_Type': n_dep*['deposit'] + n_rm*['loan'] + n_wa*['wealth'],
+                     'Banker_Type': n_dep*['Deposits'] + n_rm*['Loans'] + n_wa*['Wealth'],
                      'Banker_ID': range(1,n+1,1),
                      'Banker_Name': [fake.first_name() + ' ' + fake.last_name() for _ in range(n)],
                      }
@@ -358,8 +358,12 @@ if __name__ == '__main__':
     # todo:
     # clients table - add join date
     # accounts table - add account open date
-    # faker data - address, first name, last name, date of birth, banker names, counterparty names
+    # x faker data - address, first name, last name, date of birth, banker names
     # counterparties
-    # transactions 
+    # transactions - oct through december
+      # - loans - infer original balance and make fixed payments, treat loc differently
+      # - counterparties - outbound transactions - add mart car, etc to names or manually set names and sample
+      # - counterparties - employers, fixed direct deposits
+      # - transfers between households in/out when hh_size > 1
     # write db and evaluate size
     # host on hugging face
