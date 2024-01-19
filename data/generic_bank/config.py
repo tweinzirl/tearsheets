@@ -21,7 +21,7 @@ p_nonprofit = 0.05
 assert (p_person + p_fin_business + p_nonfin_business + p_nonprofit) == 1
 
 # client product mix - currently no dependency on client type
-product_mix = 6*['D'] + 3*['DL'] + 2*['DLW'] + ['L'] + ['LW'] + 2*['W']
+product_mix = 6*['D'] + 4*['DL'] + 2*['DLW'] + 0*['L'] + 0*['LW'] + 3*['W']
 
 # household parmaters
 hh_size_distribution = 6*[1] + [2,2,3,4]
