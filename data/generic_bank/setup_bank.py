@@ -326,7 +326,70 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     for idx_cat in accounts_df['Account_Category'].unique():
         accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
  
-    return(accounts_df)
+    return(accounts_df.reset_index(drop=True))
+
+
+def transactions(accounts_df, date_range=['10-15-2023']):
+    '''
+    Calculate transactions on accounts.
+ 
+    1. Transactions on non-LOC loans: Generate original loan balances and assume
+       payments are a fixed percent of the original balance. Make corresponding
+       transaction for the checking account (if any). Otherwise say payment from
+       internal account.
+    '''
+
+    ### part 1: loan payments for non-LOC loans
+    loans_df = accounts_df.query('Account_Category=="Loans" & Account_Type.str.contains("LOC")==False')
+
+    # checking accounts for loan clients
+    chk_df = (accounts_df
+              .query('Account_Type=="CHK"')
+              .filter(items=['Client_ID', 'Account_Nr'])
+              .rename({'Account_Nr': 'Autodebit_Acct'}, axis=1)
+              )
+
+    # clients with checking
+    clients_with_chk = accounts_df.query('Account_Type=="CHK"').Client_ID.unique()
+
+    # clients with loans paying from internal or external deposit account
+    #loans_df.loc[:, 'External_Payment'] = loans_df.eval('Client_ID in @clients_with_chk')
+
+    # add in autodebit deposit account
+    loans_df = loans_df.merge(chk_df, how='left', on='Client_ID')
+
+    # 'Open_balance' is the balance on 9/30/2023. Assume current balance is 20-80% of the original balance. Infer the original balance.
+    loans_df = loans_df.assign(Payoff_Pct=np.random.randint(20,80, size=loans_df.shape[0]))
+    loans_df = loans_df.assign(Original_Bal=lambda x: (100*x.Open_Balance/x.Payoff_Pct).astype(int))
+
+    # iterate loans and generate transactions
+    transactions_df = pd.DataFrame()
+    for idx, row in loans_df.iterrows():
+        for d in date_range:
+
+            From_Account_Nr = row.Account_Nr if not pd.isnull(row.Account_Nr) else 'EXTERNAL ACCT'
+            To_Account_Nr = row.Account_Nr
+            Transaction_Amount = 0.0028*row.Original_Bal  # payment is 0.28%, or 1/(30*12)
+
+            tran_dict = {'Date': [d],
+                         'Transaction_Type': ['Payment'],
+                         'From_Account_Nr': [From_Account_Nr],
+                         'To_Account_Nr': [To_Account_Nr],
+                         'Transaction_Amount': [-Transaction_Amount]
+                         }
+
+            # add transaction for checking account if internal account
+            if not pd.isnull(row.Account_Nr):
+                tran_dict['Date'] += [d]
+                tran_dict['Transaction_Type'] += ['Payment']
+                tran_dict['From_Account_Nr'] += [To_Account_Nr]
+                tran_dict['To_Account_Nr'] += [From_Account_Nr]
+                tran_dict['Transaction_Amount'] += [-Transaction_Amount]
+
+            tran_df = pd.DataFrame(tran_dict)
+            transactions_df = pd.concat([transactions_df, tran_df], ignore_index=True)
+
+    return transactions_df.reset_index(names='Transaction_ID')
 
 
 if __name__ == '__main__':
@@ -354,6 +417,9 @@ if __name__ == '__main__':
 
     # accounts
     accounts_df = m.assign_accounts_to_clients_and_bankers(clients_df, bankers_df)
+
+    # transactions
+    transactions_df = m.transactions(accounts_df, date_range=['2023-10-15', '2023-11-15', '2024-12-15'])
 
     # todo:
     # clients table - add join date
