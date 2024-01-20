@@ -3,6 +3,9 @@ n_regions = 2
 n_branches = 2
 n_clients = 1e4
 
+# define default list of regions
+l_regions = ['West', 'East', 'North', 'South']
+
 # distribution of headcount per branch
 HEADCOUNT_AVG = 10
 HEADCOUNT_STD = 2

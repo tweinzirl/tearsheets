@@ -25,9 +25,13 @@ fake = faker.Faker()
 
 
 def regions(n):
-   '''Return n distinct regions and regional managers'''
-   x = np.arange(1, n+1, 1)
-   return pd.DataFrame(np.array([x,x]).T, columns=['Region_Number', 'Regional_Manager'])
+    '''Return n distinct regions and regional managers'''
+    x = np.arange(1, n+1, 1)
+    df = pd.DataFrame(np.array([x,x]).T, columns=['Region_Number', 'Regional_Manager'])
+    assert n <= len(config.l_regions), "n cannot exceed nr of region names defined in config"
+    reg_nm = config.l_regions[0:n]
+    df = df.assign(Region_Name = reg_nm)
+    return df
 
 
 def branches(n):
@@ -284,6 +288,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         clt = row.Client_Type
         n = int(sum([n_D, n_L, n_W]))
 
+        # TODO add CHK for client with Loan and no checking
         # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],  # for debugging
@@ -357,7 +362,7 @@ if __name__ == '__main__':
 
     # todo:
     # clients table - add join date
-    # accounts table - add account open date
+    # accounts table - add account open date (CHK opened before Loan acct), add CHK to each Loan w/ no accts, rename Open_Bal to Curr_Bal (as of e.g. 10/1)
     # x faker data - address, first name, last name, date of birth, banker names
     # counterparties
     # transactions - oct through december
