@@ -323,7 +323,8 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
             acct_val.append(acct_val_sel[0])
             bal_val.append(bal_val_sel)
             banker_val.append(banker_val_sel[0])
-        row_df = row_df.assign(Account_Type = acct_val, Open_Balance = bal_val, Banker_ID = banker_val)
+        # Init_Balance: Initial Balance e.g. as of 10/1/2023
+        row_df = row_df.assign(Account_Type = acct_val, Init_Balance = bal_val, Banker_ID = banker_val)
         accounts_df = pd.concat([accounts_df, row_df])
 
     # unique account id per acct category (i.e. D#, L#, W#)
@@ -362,7 +363,7 @@ if __name__ == '__main__':
 
     # todo:
     # clients table - add join date
-    # accounts table - add account open date (CHK opened before Loan acct), add CHK to each Loan w/ no accts, rename Open_Bal to Curr_Bal (as of e.g. 10/1)
+    # accounts table - add account open date (CHK opened before Loan acct), add CHK to each Loan w/ no accts
     # x faker data - address, first name, last name, date of birth, banker names
     # counterparties
     # transactions - oct through december
