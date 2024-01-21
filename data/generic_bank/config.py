@@ -1,3 +1,5 @@
+import datetime
+
 # set bank size
 n_regions = 2
 n_branches = 2
@@ -62,3 +64,9 @@ bal_org_accts = {'Deposits': {'CHK': [350, 350/5], 'SV': [1900, 1900/5], 'CD': [
                  'Loans': {'SFR': [1100, 1100/5], 'HELOC': [0, 0/5], 'MF': [3300, 3300/5], 'CRE': [3800, 3800/5], 'LOC': [800, 800/5]},
                  'Wealth': {'FRIM': [2500, 2500/5], 'FRS': [3800, 3800/5]}
                 }
+
+# transactions
+payment_day = 15  # date of direct deposits and loan_payments
+tran_min_date, tran_max_date = datetime.datetime(2023,10,1), datetime.datetime(2023,12,31)
+transactor_root = ['DYI', 'Kost', 'Toys', 'Games', 'Books', 'Adult\'s', 'Movies', 'Food', 'Sundries', 'Clothes', 'Vice', 'Spice']
+transactor_suffix = ['Store', 'Mart', 'R US', '& Co', 'And More', 'Village', 'For All', 'Discounted']
