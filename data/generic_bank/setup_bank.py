@@ -125,7 +125,7 @@ def clients(n):
             name[i] = fake.company()
             birthday[i] = np.nan
         else:
-            name[i] = fake.company() + ' School'
+            name[i] = fake.last_name() + ' School'
             birthday[i] = np.nan
         
         address[i] = fake.street_address()  # just street address, apply region later
@@ -329,15 +329,34 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     return(accounts_df.reset_index(drop=True))
 
 
-def transactions(accounts_df, date_range=['10-15-2023']):
+def transactions(accounts_df, adults, households_df):
     '''
-    Calculate transactions on accounts.
- 
-    1. Transactions on non-LOC loans: Generate original loan balances and assume
-       payments are a fixed percent of the original balance. Make corresponding
-       transaction for the checking account (if any). Otherwise say payment from
-       internal account.
+    Generate transactions from helper functions:
+        - transactions_1: loan payments
+        - transactions_2: transactions and direct deposits for People
+        - transaction_3: transactions between households
     '''
+
+    df_1 = transactions_1(accounts_df)
+    df_2 = transactions_2(accounts_df, adults)
+    df_3 = transactions_3(accounts_df, households_df)
+
+    transactions = pd.concat([df_1, df_2.astype(df_1.dtypes)])  # standardize datetime units
+    transactions = pd.concat([transactions, df_3.astype(df_1.dtypes)], ignore_index=True)  # standardize datetime units
+
+    return transactions.reset_index(names='Transaction_ID')
+
+
+def transactions_1(accounts_df):
+    '''
+    Transactions on non-LOC loans: Generate original loan balances and assume
+    payments are a fixed percent of the original balance. Make corresponding
+    transaction for the checking account (if any). Otherwise say payment from
+    internal account.
+    '''
+
+    first_month, last_month = config.tran_min_date.month, config.tran_max_date.month
+    date_range = [datetime.datetime(2023, m, config.payment_day) for m in range(first_month, last_month+1, 1)]
 
     ### part 1: loan payments for non-LOC loans
     loans_df = accounts_df.query('Account_Category=="Loans" & Account_Type.str.contains("LOC")==False')
@@ -352,9 +371,6 @@ def transactions(accounts_df, date_range=['10-15-2023']):
     # clients with checking
     clients_with_chk = accounts_df.query('Account_Type=="CHK"').Client_ID.unique()
 
-    # clients with loans paying from internal or external deposit account
-    #loans_df.loc[:, 'External_Payment'] = loans_df.eval('Client_ID in @clients_with_chk')
-
     # add in autodebit deposit account
     loans_df = loans_df.merge(chk_df, how='left', on='Client_ID')
 
@@ -367,29 +383,178 @@ def transactions(accounts_df, date_range=['10-15-2023']):
     for idx, row in loans_df.iterrows():
         for d in date_range:
 
-            From_Account_Nr = row.Account_Nr if not pd.isnull(row.Account_Nr) else 'EXTERNAL ACCT'
+            From_Account_Nr = row.Autodebit_Acct if not pd.isnull(row.Autodebit_Acct) else 'EXTERNAL ACCT'
             To_Account_Nr = row.Account_Nr
-            Transaction_Amount = 0.0028*row.Original_Bal  # payment is 0.28%, or 1/(30*12)
+            Amount = 0.0028*row.Original_Bal  # payment is 0.28%, or 1/(30*12)
 
             tran_dict = {'Date': [d],
-                         'Transaction_Type': ['Payment'],
+                         'Description': [f'Loan payment from {From_Account_Nr}'],
                          'From_Account_Nr': [From_Account_Nr],
                          'To_Account_Nr': [To_Account_Nr],
-                         'Transaction_Amount': [-Transaction_Amount]
+                         'Amount': [-Amount]
                          }
 
             # add transaction for checking account if internal account
-            if not pd.isnull(row.Account_Nr):
+            if not pd.isnull(row.Autodebit_Acct):
                 tran_dict['Date'] += [d]
-                tran_dict['Transaction_Type'] += ['Payment']
+                tran_dict['Description'] += ['Loan Payment from external account']
                 tran_dict['From_Account_Nr'] += [To_Account_Nr]
                 tran_dict['To_Account_Nr'] += [From_Account_Nr]
-                tran_dict['Transaction_Amount'] += [-Transaction_Amount]
+                tran_dict['Amount'] += [-Amount]
 
             tran_df = pd.DataFrame(tran_dict)
             transactions_df = pd.concat([transactions_df, tran_df], ignore_index=True)
 
-    return transactions_df.reset_index(names='Transaction_ID')
+    return transactions_df
+
+
+def adult_people(clients_df, links_df, households_df):
+    '''
+    Return Client_ID of adults (married and single) as an array.
+    '''
+
+    # infer adult people
+    married_adults = (links_df
+                      .query('Link_Type=="Spouse"')
+                      .filter(items=['Client_1', 'Client_2'])
+                      .values.flatten()
+                      )
+
+    # single adults
+    hh_size = households_df.Household_ID.value_counts().to_frame('HH_Size')
+    households_df = households_df.merge(hh_size, left_on='Household_ID', right_index=True)
+    singletons = households_df.query('HH_Size==1').Client_ID.values
+    single_adults = (clients_df
+
+                     ##### this part wrong, need to apply client_iD in the singleon
+                     .query('Client_Type=="Person" & Client_ID in @singletons')
+                     .Client_ID.values
+                     )
+
+    return np.append(married_adults, single_adults)
+
+
+def transactions_2(accounts_df, adults):
+    '''
+    Transactions for adult People, including outgoing POS/POP transations and incoming
+    direct deposits from employers.
+    '''
+
+    # checking accounts - where the transactions happen
+    chk_df = accounts_df.query('Account_Type=="CHK" & Client_ID in @adults').set_index('Client_ID')
+
+    # data storage
+    transactions_df = pd.DataFrame()
+
+    # generate transactions per day
+    for d in pd.date_range(config.tran_min_date, config.tran_max_date, freq='D', unit='us'):
+        # random sample clients who have transactions
+        transactors = np.random.choice(adults, int(0.1*adults.shape[0]), replace=False)
+
+        # Build transactions in vectorized way per each day
+        tran_df = chk_df.query('Client_ID in @transactors')
+
+        # generate one outbound payment per selected client
+        tran_df = tran_df.assign(
+            Date=d,
+            root=np.random.choice(config.transactor_root, size=tran_df.shape[0]), 
+            suffix = np.random.choice(config.transactor_suffix, size=tran_df.shape[0]),
+            Description=lambda x: 'POS ' + x.root + ' ' + x.suffix,
+            From_Account_Nr=lambda x: x.Account_Nr,
+            To_Account_Nr='',
+            Amount=lambda x: -0.01*x.Open_Balance,
+            )
+
+        # record daily transactions
+        transactions_df = pd.concat([transactions_df,
+            tran_df.filter(items=['Date', 'Description', 'From_Account_Nr', 'To_Account_Nr', 'Amount'])], ignore_index=True)
+
+    # inbound direct deposits from unnamed employer on payment_day of each month
+    tran_df = chk_df.copy()
+    first_month, last_month = config.tran_min_date.month, config.tran_max_date.month
+    date_range = [datetime.datetime(2023, m, config.payment_day) for m in range(first_month, last_month+1, 1)]
+    # working adults
+    payees = np.random.choice(adults, int(0.9*adults.shape[0]), replace=False)
+    for d in date_range:
+        tran_df = chk_df.query('Client_ID in @payees')
+
+        # generate one outbound payment per selected client
+        tran_df = tran_df.assign(
+            Date=d,
+            Description='Direct Deposit From Employer',
+            From_Account_Nr='',
+            To_Account_Nr=lambda x: x.Account_Nr,
+            Amount=lambda x: 0.25*x.Open_Balance,
+            )
+
+        # record daily transactions
+        transactions_df = pd.concat([transactions_df,
+            tran_df.filter(items=['Date', 'Description', 'From_Account_Nr', 'To_Account_Nr', 'Amount'])], ignore_index=True)
+
+
+    return transactions_df
+
+
+def _add_transaction(tran_dict, d, description, from_nr, to_nr, amount):
+    '''
+    Utility function to add transaction to dictionary
+    '''
+
+    tran_dict['Date'] += [d]
+    tran_dict['Description'] += [description]
+    tran_dict['From_Account_Nr'] += [from_nr]
+    tran_dict['To_Account_Nr'] += [to_nr]
+    tran_dict['Amount'] += [amount]
+
+    return tran_dict
+
+
+def transactions_3(accounts_df, households_df):
+    '''
+    Set up internal transfers between households.
+    '''
+
+    # clients with deposits in big household
+    clients_per_hh = (households_df
+                      .query('Product_Mix.str.contains("D")==True')
+                      .groupby('Household_ID')
+                      .agg({'Client_Type': 'count', 'Client_ID': list})
+                      .rename(columns={'Client_Type': 'HH_Size', 'Client_ID': 'HH_Members'})
+                      )
+    big_hh_df = (households_df
+                 .merge(clients_per_hh, left_on='Household_ID', right_index=True)
+                 .query('HH_Size>1')
+                 .set_index('Household_ID')
+                 )
+
+    # deposit accounts for those households
+    dep_df = accounts_df.query('Account_Type!="CD" & Account_Category=="Deposits" & Client_ID in @big_hh_df.Client_ID').set_index('Client_ID')
+
+    transaction_dict = {'Date': [], 'Description': [], 'From_Account_Nr': [],
+        'To_Account_Nr': [], 'Amount': []}
+
+    for d in pd.date_range(config.tran_min_date, config.tran_max_date, freq='D', unit='us'):
+        #print(d)
+        # random sample clients who have transactions
+        transactors = np.random.choice(big_hh_df.index, int(0.05*big_hh_df.shape[0]), replace=False)
+
+        for hh in transactors:
+            client_1, client_2 = big_hh_df.loc[hh].head(1).HH_Members.values[0][:2]
+            try:  # pass if KeyError, e.g., for CD accounts
+                amount = np.random.uniform(0.25, 0.5) * dep_df.loc[client_1].Open_Balance
+
+                # outgoing
+                transaction_dict = _add_transaction(transaction_dict, d, 'Internal Transfer',
+                    dep_df.loc[client_1].Account_Nr, dep_df.loc[client_2], -amount)
+
+                # incoming
+                transaction_dict = _add_transaction(transaction_dict, d, 'Internal Transfer',
+                    dep_df.loc[client_2].Account_Nr, dep_df.loc[client_1], amount)
+
+            except KeyError:
+                pass
+
+    return pd.DataFrame(transaction_dict)
 
 
 if __name__ == '__main__':
@@ -419,7 +584,8 @@ if __name__ == '__main__':
     accounts_df = m.assign_accounts_to_clients_and_bankers(clients_df, bankers_df)
 
     # transactions
-    transactions_df = m.transactions(accounts_df, date_range=['2023-10-15', '2023-11-15', '2024-12-15'])
+    adults = m.adult_people(clients_df, links_df, households_df)
+    transactions_df = m.transactions(accounts_df, adults, households_df)
 
     # todo:
     # clients table - add join date
