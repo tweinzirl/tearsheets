@@ -391,7 +391,7 @@ def transactions_1(accounts_df):
 
     # 'Open_balance' is the balance on 9/30/2023. Assume current balance is 20-80% of the original balance. Infer the original balance.
     loans_df = loans_df.assign(Payoff_Pct=np.random.randint(20,80, size=loans_df.shape[0]))
-    loans_df = loans_df.assign(Original_Bal=lambda x: (100*x.Open_Balance/x.Payoff_Pct).astype(int))
+    loans_df = loans_df.assign(Original_Bal=lambda x: (100*x.Init_Balance/x.Payoff_Pct).astype(int))
 
     # iterate loans and generate transactions
     transactions_df = pd.DataFrame()
@@ -477,7 +477,7 @@ def transactions_2(accounts_df, adults):
             Description=lambda x: 'POS ' + x.root + ' ' + x.suffix,
             From_Account_Nr=lambda x: x.Account_Nr,
             To_Account_Nr='',
-            Amount=lambda x: -0.01*x.Open_Balance,
+            Amount=lambda x: -0.01*x.Init_Balance,
             )
 
         # record daily transactions
@@ -499,7 +499,7 @@ def transactions_2(accounts_df, adults):
             Description='Direct Deposit From Employer',
             From_Account_Nr='',
             To_Account_Nr=lambda x: x.Account_Nr,
-            Amount=lambda x: 0.25*x.Open_Balance,
+            Amount=lambda x: 0.25*x.Init_Balance,
             )
 
         # record daily transactions
@@ -556,7 +556,7 @@ def transactions_3(accounts_df, households_df):
         for hh in transactors:
             client_1, client_2 = big_hh_df.loc[hh].head(1).HH_Members.values[0][:2]
             try:  # pass if KeyError, e.g., for CD accounts
-                amount = np.random.uniform(0.25, 0.5) * dep_df.loc[client_1].Open_Balance
+                amount = np.random.uniform(0.25, 0.5) * dep_df.loc[client_1].Init_Balance
 
                 # outgoing
                 transaction_dict = _add_transaction(transaction_dict, d, 'Internal Transfer',
