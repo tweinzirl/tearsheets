@@ -5,6 +5,9 @@ n_regions = 2
 n_branches = 2
 n_clients = 1e4
 
+# define default list of regions
+l_regions = ['West', 'East', 'North', 'South']
+
 # distribution of headcount per branch
 HEADCOUNT_AVG = 10
 HEADCOUNT_STD = 2
@@ -23,6 +26,7 @@ p_nonprofit = 0.05
 assert (p_person + p_fin_business + p_nonfin_business + p_nonprofit) == 1
 
 # client product mix - currently no dependency on client type
+# for 'DL' will need to ensure D is CHK
 product_mix = 6*['D'] + 4*['DL'] + 2*['DLW'] + 0*['L'] + 0*['LW'] + 3*['W']
 
 # household parmaters

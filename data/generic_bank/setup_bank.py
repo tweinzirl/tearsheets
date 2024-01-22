@@ -25,9 +25,13 @@ fake = faker.Faker()
 
 
 def regions(n):
-   '''Return n distinct regions and regional managers'''
-   x = np.arange(1, n+1, 1)
-   return pd.DataFrame(np.array([x,x]).T, columns=['Region_Number', 'Regional_Manager'])
+    '''Return n distinct regions and regional managers'''
+    x = np.arange(1, n+1, 1)
+    df = pd.DataFrame(np.array([x,x]).T, columns=['Region_Number', 'Regional_Manager'])
+    assert n <= len(config.l_regions), "n cannot exceed nr of region names defined in config"
+    reg_nm = config.l_regions[0:n]
+    df = df.assign(Region_Name = reg_nm)
+    return df
 
 
 def branches(n):
@@ -60,6 +64,7 @@ def assign_personnel_to_branches(df):
         config.HEADCOUNT_STD, size=df.shape[0]).astype(int)
 
     df = df.assign(Headcount = headcount_per_branch)
+    # TODO make `astype(int)`
     df = df.assign(N_deposit_ofcr = lambda x: config.f_deposit_ofcr * x.Headcount)
     df = df.assign(N_loan_ofcr = lambda x: config.f_loan_ofcr * x.Headcount)
     df = df.assign(N_wealth_ofcr = lambda x: config.f_wealth_ofcr * x.Headcount)
@@ -88,7 +93,7 @@ def assign_personnel_to_branches(df):
     # unique banker id
     banker_df.Banker_ID = range(1,banker_df.shape[0]+1,1)
 
-    return df.astype(int), banker_df
+    return df, banker_df
 
 
 def clients(n):
@@ -251,7 +256,7 @@ def account_types():
                 }
 
     acct_types_df = pd.DataFrame(data_dict)
-    return(acct_types_df)
+    return acct_types_df
 
 
 def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
@@ -275,7 +280,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # identify number of DLW accounts per client
         # TODO assumes 1 acct per category - can randomly select multiple accounts here
         # can sample from distr with mean 2 std 1, threshold of min 1 if acct cat is present
-        # if idx != 18: continue
+        # if idx != 0: continue  # for debugging
         n_D=0; n_L=0; n_W=0
         if 'D' in row.Product_Mix: n_D+=1
         if 'L' in row.Product_Mix: n_L+=1
@@ -284,9 +289,10 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         clt = row.Client_Type
         n = int(sum([n_D, n_L, n_W]))
 
+        # TODO add CHK for client with Loan and no checking
         # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
-                     'Client_Type': n*[clt],  # for debugging
+                     'Client_Type': n*[clt],
                      'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
                      'Account_Nr': np.array(range(1,n+1,1), dtype=str)
                      }
@@ -297,10 +303,14 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # assign bankers to accounts (equal probabilies per account category, no individual / org split)
         acct_val = []; bal_val = []; banker_val = []
         for idx, row_ in row_df.iterrows():
+            # if row_['Account_Category'] != 'Deposits': continue  # for debugging
             if row.Client_Type == 'Person':
                 acct_val_sel = np.random.choice(
                     list(config.f_indiv_accts[row_['Account_Category']].keys()), 
                     size=1, p=list(config.f_indiv_accts[row_['Account_Category']].values()))
+                # if client has L, then force D to be CHK (this effectively modifies relative freqs defined in the config)
+                if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
+                    acct_val_sel[0] = 'CHK'
                 bal_val_sel = round(np.random.normal(loc=config.bal_indiv_accts[row_['Account_Category']][acct_val_sel[0]][0],
                                                scale=config.bal_indiv_accts[row_['Account_Category']][acct_val_sel[0]][1], 
                                                size=1)[0], 1)
@@ -308,24 +318,29 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
                 acct_val_sel = np.random.choice(
                     list(config.f_org_accts[row_['Account_Category']].keys()), 
                     size=1, p=list(config.f_org_accts[row_['Account_Category']].values()))
+                # if client has L, then force D to be CHK
+                if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
+                    acct_val_sel[0] = 'CHK'
                 bal_val_sel = round(np.random.normal(loc=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][0],
                                                scale=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][1], 
                                                size=1)[0], 1)
-            # no individual / org split
+            # no individual / org split for banker assignment
             banker_val_sel = np.random.choice(
                 list(l_bankers[row_['Account_Category']]),
                 size=1, p=f_bankers[row_['Account_Category']])
             acct_val.append(acct_val_sel[0])
             bal_val.append(bal_val_sel)
             banker_val.append(banker_val_sel[0])
-        row_df = row_df.assign(Account_Type = acct_val, Open_Balance = bal_val, Banker_ID = banker_val)
+        
+        # Init_Balance: Initial Balance e.g. as of 10/1/2023
+        row_df = row_df.assign(Account_Type = acct_val, Init_Balance = bal_val, Banker_ID = banker_val)
         accounts_df = pd.concat([accounts_df, row_df])
 
     # unique account id per acct category (i.e. D#, L#, W#)
     n_acct_cat = accounts_df.groupby('Account_Category').size()
     for idx_cat in accounts_df['Account_Category'].unique():
         accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
- 
+
     return(accounts_df.reset_index(drop=True))
 
 
@@ -560,7 +575,7 @@ def transactions_3(accounts_df, households_df):
 if __name__ == '__main__':
     import setup_bank as m
     import config
-    # from importlib import reload
+    from importlib import reload
 
     # set random seed
     np.random.seed(42)
@@ -589,7 +604,7 @@ if __name__ == '__main__':
 
     # todo:
     # clients table - add join date
-    # accounts table - add account open date
+    # accounts table - add account open date (CHK opened before Loan acct), fix frequency assumpmtions
     # x faker data - address, first name, last name, date of birth, banker names
     # x counterparties - (only for consumer transactions)
     # x transactions - oct through december
