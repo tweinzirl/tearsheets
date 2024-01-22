@@ -591,11 +591,12 @@ if __name__ == '__main__':
     # clients table - add join date
     # accounts table - add account open date
     # x faker data - address, first name, last name, date of birth, banker names
-    # counterparties
-    # transactions - oct through december
+    # x counterparties - (only for consumer transactions)
+    # x transactions - oct through december
       # - loans - infer original balance and make fixed payments, treat loc differently
       # - counterparties - outbound transactions - add mart car, etc to names or manually set names and sample
       # - counterparties - employers, fixed direct deposits
       # - transfers between households in/out when hh_size > 1
+    # accounts timeseries table, show account number and balance over all dates, Oct 1 to Dec 31
     # write db and evaluate size
     # host on hugging face
