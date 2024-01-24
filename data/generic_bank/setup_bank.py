@@ -398,7 +398,7 @@ def transactions_1(accounts_df):
     for idx, row in loans_df.iterrows():
         for d in date_range:
 
-            From_Account_Nr = row.Autodebit_Acct if not pd.isnull(row.Autodebit_Acct) else 'EXTERNAL ACCT'
+            From_Account_Nr = row.Autodebit_Acct if not pd.isnull(row.Autodebit_Acct) else 'NULL'
             To_Account_Nr = row.Account_Nr
             Amount = 0.0028*row.Original_Bal  # payment is 0.28%, or 1/(30*12)
 
@@ -476,7 +476,7 @@ def transactions_2(accounts_df, adults):
             suffix = np.random.choice(config.transactor_suffix, size=tran_df.shape[0]),
             Description=lambda x: 'POS ' + x.root + ' ' + x.suffix,
             From_Account_Nr=lambda x: x.Account_Nr,
-            To_Account_Nr='',
+            To_Account_Nr='NULL',
             Amount=lambda x: -0.01*x.Init_Balance,
             )
 
@@ -497,7 +497,7 @@ def transactions_2(accounts_df, adults):
         tran_df = tran_df.assign(
             Date=d,
             Description='Direct Deposit From Employer',
-            From_Account_Nr='',
+            From_Account_Nr='NULL',
             To_Account_Nr=lambda x: x.Account_Nr,
             Amount=lambda x: 0.25*x.Init_Balance,
             )
@@ -572,6 +572,60 @@ def transactions_3(accounts_df, households_df):
     return pd.DataFrame(transaction_dict)
 
 
+def balance_timeseries(accounts_df, transactions_df, init_date=datetime.datetime(2023,9,30)):
+    '''
+    Build timeseries of account balances given accounts, transactions, and the
+    date of the initial balance.
+    '''
+
+    # initialize timeseries for init_date
+    ts_df = (accounts_df
+             .filter(items=['Account_Nr', 'Init_Balance'])
+             .rename(columns={'Init_Balance':'Balance'})
+             .assign(Date=init_date)
+             .filter(items=['Date', 'Account_Nr', 'Balance'])
+             .astype({'Date':'datetime64[ns]'})
+             )
+
+    # prepare transactions for merge
+    tran_df = (transactions_df
+               .rename(columns={'From_Account_Nr':'Account_Nr'})  # rename
+               .groupby(['Date', 'Account_Nr'], as_index=False)  # group by date, account
+               .agg({'Amount': 'sum'})  # sum tran amounts
+               .rename(columns={'Amount':'Balance'})
+               )
+
+    # combine with initial time series and sort by Account_Nr, Date
+    ts_df = (pd
+             .concat([ts_df, tran_df], ignore_index=True)
+             .sort_values(by=['Account_Nr', 'Date'])
+             ) 
+
+    # cumulative sum balance over date
+    ts = ts_df.groupby(['Account_Nr']).agg({'Balance':'cumsum'})
+
+    # add balance and balance change
+    ts_df = ts_df.assign(Net_Change=lambda x: x.Balance)
+    ts_df = ts_df.assign(Balance=ts.Balance)
+
+    # index
+    ts_df = ts_df.set_index(['Account_Nr', 'Date'])
+
+    # re-index (https://stackoverflow.com/questions/27421256/re-index-dataframe-by-new-range-of-dates)
+    account_index = ts_df.index.get_level_values(0).unique()
+    date_index = ts_df.index.get_level_values(1).unique()
+    multi_index = pd.MultiIndex.from_product([account_index, date_index])
+
+    ts_df = (ts_df
+            .reindex(multi_index)
+            .sort_index()
+            .assign(Balance=lambda x: x.Balance.ffill())  # forward fill NaNs
+            .assign(Net_Change=lambda x: x.Net_Change.fillna(0))  # forward fill NaNs
+            )
+
+    return ts_df#.reset_index()
+
+
 if __name__ == '__main__':
     import setup_bank as m
     import config
@@ -601,6 +655,9 @@ if __name__ == '__main__':
     # transactions
     adults = m.adult_people(clients_df, links_df, households_df)
     transactions_df = m.transactions(accounts_df, adults, households_df)
+
+    # account timeseries
+    ts_df = m.balance_timeseries(accounts_df, transactions_df, config.snapshot_date)
 
     # todo:
     # clients table - add join date
