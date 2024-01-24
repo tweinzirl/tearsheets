@@ -74,3 +74,6 @@ payment_day = 15  # date of direct deposits and loan_payments
 tran_min_date, tran_max_date = datetime.datetime(2023,10,1), datetime.datetime(2023,12,31)
 transactor_root = ['DYI', 'Kost', 'Toys', 'Games', 'Books', 'Adult\'s', 'Movies', 'Food', 'Sundries', 'Clothes', 'Vice', 'Spice']
 transactor_suffix = ['Store', 'Mart', 'R US', '& Co', 'And More', 'Village', 'For All', 'Discounted']
+
+# timeseries
+snapshot_date = datetime.datetime(2023, 9, 30)  # date of Init_Balance
