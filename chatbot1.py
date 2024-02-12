@@ -21,14 +21,14 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.agents.output_parsers import OpenAIFunctionsAgentOutputParser
-from langchain.chat_models import ChatOpenAI
 from langchain.memory import  ChatMessageHistory, ConversationBufferMemory
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.schema import AIMessage, HumanMessage
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.tools import tool
-from langchain.tools.render import format_tool_to_openai_function
+from langchain_core.utils.function_calling import convert_to_openai_function
 
+from langchain_openai import ChatOpenAI
 
 from typing import Optional, List
 from pydantic.v1 import BaseModel, Field
@@ -199,7 +199,7 @@ class ChatAgent:
     def __init__(self):
         # update this list of tools as more are added
         tools = [chat_with_docs, chat_with_db, gen_send_tearsheet, list_my_clients, send_top3_email]
-        openai_functions = [format_tool_to_openai_function(f) for f in tools]
+        openai_functions = [convert_to_openai_function(f) for f in tools]
 
         # prompt
         prompt = ChatPromptTemplate.from_messages([
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     # vectordb.similarity_search and filter = {'client_name': 'Robert King'}
 
     tools = [m.chat_with_docs, m.gen_send_tearsheet]
-    functions = [m.format_tool_to_openai_function(f) for f in tools]
+    functions = [m.convert_to_openai_function(f) for f in tools]
     model = m.ChatOpenAI(temperature=0).bind(functions=functions)
     prompt = m.ChatPromptTemplate.from_messages([
         ("system", "You are helpful but sassy assistant"),

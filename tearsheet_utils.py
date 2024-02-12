@@ -7,21 +7,17 @@ import openai
 
 # langchain
 from langchain.chains import RetrievalQA
-from langchain.chat_models import ChatOpenAI #  depreciated
-import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning) 
-# from langchain_openai import ChatOpenAI
-
 from langchain.document_loaders import UnstructuredHTMLLoader
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage, StrOutputParser, SystemMessage
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.vectorstores import Chroma
 
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
 # Evaluation
-from ragas.metrics import faithfulness, answer_relevancy, context_relevancy
-from ragas.langchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
+#from ragas.metrics import faithfulness, answer_relevancy, context_relevancy
+#from ragas.langchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
 
 # authentication
 from dotenv import load_dotenv, find_dotenv
@@ -68,15 +64,14 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
         search_kwargs={"k": top_k,
                        "filter": filter,})
 
-    # """
+    """
     # run qa chain with retriever
     qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
     result = qa_chain({"query": q})
 
     return result['result']
-    # '''
+    """
 
-    '''
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
@@ -100,7 +95,8 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
     )
 
     return rag_chain.invoke(q)
-    '''
+
+
 def llm_chat(msgs=None, human_msg=None, system_msg=None,
     llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
     '''
