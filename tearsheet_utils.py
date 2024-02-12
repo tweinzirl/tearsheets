@@ -10,6 +10,7 @@ from langchain.chains import RetrievalQA
 from langchain.document_loaders import UnstructuredHTMLLoader
 from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage, StrOutputParser, SystemMessage
+from langchain_core.runnables import RunnableParallel
 from langchain.schema.runnable import RunnablePassthrough
 from langchain.vectorstores import Chroma
 
@@ -64,14 +65,6 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
         search_kwargs={"k": top_k,
                        "filter": filter,})
 
-    """
-    # run qa chain with retriever
-    qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)
-    result = qa_chain({"query": q})
-
-    return result['result']
-    """
-
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
@@ -87,14 +80,21 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
     Answer:"""
     prompt = PromptTemplate.from_template(template)
 
-    rag_chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    # https://python.langchain.com/docs/use_cases/question_answering/sources#adding-sources
+    rag_chain_from_docs = (
+        RunnablePassthrough.assign(context=(lambda x: format_docs(x["context"])))
         | prompt
         | llm
         | StrOutputParser()
     )
 
-    return rag_chain.invoke(q)
+    rag_chain_with_source = RunnableParallel(
+        {"context": retriever, "question": RunnablePassthrough()}
+    ).assign(answer=rag_chain_from_docs)
+
+    rag = rag_chain_with_source.invoke(q)  # dict has keys for question, answer, context
+
+    return rag['answer']  # todo: add parameters to return rag metrics and/or context
 
 
 def llm_chat(msgs=None, human_msg=None, system_msg=None,
