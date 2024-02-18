@@ -120,11 +120,11 @@ def clients(n):
     product_mix = np.random.choice(config.product_mix, size=n)  # decimal probs
 
     # client_name/address
-    name, address, birthday = n*[''], n*[''], n*['']
+    name, address, birthday, join_date = n*[''], n*[''], n*[''], n*['']
     for i in range(n):
         if client_type[i] == 'Person':
             name[i] = fake.name()
-            bday = fake.date_between(datetime.datetime(1945,1,1), datetime.datetime(2023,1,1))
+            bday = fake.date_between(datetime.datetime(1945,1,1), pd.to_datetime('today').date())
             birthday[i] = bday.strftime('%m/%d')
         elif client_type[i].find('Business') != -1:
             name[i] = fake.company()
@@ -134,9 +134,12 @@ def clients(n):
             birthday[i] = np.nan
         
         address[i] = fake.street_address()  # just street address, apply region later
+        join_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
      
 
-    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix, name, address, birthday]).T, columns=['Client_ID', 'Client_Type', 'Product_Mix', 'Client_Name', 'Street_Address', 'Birthday'])
+    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix, name, address, birthday, join_date]).T, 
+                      columns=['Client_ID', 'Client_Type', 'Product_Mix', 'Client_Name', 'Street_Address', 
+                               'Birthday', 'Join_Date'])
 
     return df.astype({'Client_ID': int})
 
@@ -633,7 +636,10 @@ if __name__ == '__main__':
 
     # set random seed
     np.random.seed(42)
+    fake.seed_instance(42)
 
+    # generate data
+    
     # assign branches in two passes:
     # first pass: branches and regions
     # second pass: headcount per branch
@@ -659,8 +665,16 @@ if __name__ == '__main__':
     # account timeseries
     ts_df = m.balance_timeseries(accounts_df, transactions_df, config.snapshot_date)
 
+    
+    # validate output characteristics
+
+    # clients
+    # distribution of client join dates by month
+    # print(clients_df['Join_Date'].groupby(pd.to_datetime(clients_df['Join_Date']).dt.strftime('%Y-%m')).agg('count').to_string())
+
+
     # todo:
-    # clients table - add join date
+    # x clients table - add join date
     # accounts table - add account open date (CHK opened before Loan acct), fix frequency assumpmtions
     # x faker data - address, first name, last name, date of birth, banker names
     # x counterparties - (only for consumer transactions)
@@ -672,3 +686,5 @@ if __name__ == '__main__':
     # accounts timeseries table, show account number and balance over all dates, Oct 1 to Dec 31
     # write db and evaluate size
     # host on hugging face
+    # add myportfolio queries with aggregates by region, banker, etc.
+    # add recommendations with logic based on generic bank data 
