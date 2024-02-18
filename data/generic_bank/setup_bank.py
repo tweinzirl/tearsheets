@@ -280,10 +280,13 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     # prep accounts data frame
     accounts_df = pd.DataFrame()
     for idx, row in df.iterrows():
+        # for debugging
+        # if idx not in range(10): continue  
+        # print(row)
+
         # identify number of DLW accounts per client
         # TODO assumes 1 acct per category - can randomly select multiple accounts here
         # can sample from distr with mean 2 std 1, threshold of min 1 if acct cat is present
-        # if idx != 0: continue  # for debugging
         n_D=0; n_L=0; n_W=0
         if 'D' in row.Product_Mix: n_D+=1
         if 'L' in row.Product_Mix: n_L+=1
@@ -304,8 +307,9 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # select acct type based on mix and frequency defined in config (separate for individuals / orgs)
         # assign opening acct balance based on avg/sd defined in config (separate for individuals / orgs)
         # assign bankers to accounts (equal probabilies per account category, no individual / org split)
-        acct_val = []; bal_val = []; banker_val = []
-        for idx, row_ in row_df.iterrows():
+        # assign acct open date
+        acct_val = []; bal_val = []; banker_val = []; opendt_val = []
+        for idx_, row_ in row_df.iterrows():
             # if row_['Account_Category'] != 'Deposits': continue  # for debugging
             if row.Client_Type == 'Person':
                 acct_val_sel = np.random.choice(
@@ -322,6 +326,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
                     list(config.f_org_accts[row_['Account_Category']].keys()), 
                     size=1, p=list(config.f_org_accts[row_['Account_Category']].values()))
                 # if client has L, then force D to be CHK
+                # assumes config mix L always has corresponding D
                 if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
                     acct_val_sel[0] = 'CHK'
                 bal_val_sel = round(np.random.normal(loc=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][0],
@@ -331,12 +336,34 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
             banker_val_sel = np.random.choice(
                 list(l_bankers[row_['Account_Category']]),
                 size=1, p=f_bankers[row_['Account_Category']])
+            # acct open date (assumes D is first in list)
+            # TODO if idx = 0 and CHK, then use join date; other accounts use date between open date and 2 years from open date
+            if idx_ == 0 and row_['Account_Category'] == 'Deposits': 
+                ## if client has D, then client opened D acct on join date
+                opendt_val_sel = row['Join_Date']
+            elif idx_ == 0 and row_['Account_Category'] != 'Deposits':
+                ## if client has no D, then assume client opened L/W acct on join date (note that per config L should always have D)
+                ## for non-CHK accounts, might need to rewrite logic if we can have LW first and D second in the df
+                opendt_val_sel = row['Join_Date']
+            else: 
+                ## for idx >= 1, choose random date within 2 years from join date (or up to today, whichever comes first)
+                # manually handle 2/29 nonsense
+                if row['Join_Date'].strftime("%m-%d") == '02-29': 
+                    repl_day = row['Join_Date'].day - 1
+                else: 
+                    repl_day = row['Join_Date'].day
+                opendt_val_sel = fake.date_between(row['Join_Date'], 
+                                                   min(row['Join_Date'].replace(year=row['Join_Date'].year + 2, day=repl_day), 
+                                                       pd.to_datetime('today').date()))
+            # collect selections
             acct_val.append(acct_val_sel[0])
             bal_val.append(bal_val_sel)
             banker_val.append(banker_val_sel[0])
+            opendt_val.append(opendt_val_sel)
         
         # Init_Balance: Initial Balance e.g. as of 10/1/2023
-        row_df = row_df.assign(Account_Type = acct_val, Init_Balance = bal_val, Banker_ID = banker_val)
+        row_df = row_df.assign(Account_Type = acct_val, Init_Balance = bal_val, Banker_ID = banker_val,
+                               Open_Date = opendt_val)
         accounts_df = pd.concat([accounts_df, row_df])
 
     # unique account id per acct category (i.e. D#, L#, W#)
@@ -675,7 +702,7 @@ if __name__ == '__main__':
 
     # todo:
     # x clients table - add join date
-    # accounts table - add account open date (CHK opened before Loan acct), fix frequency assumpmtions
+    # accounts table - x add account open date (ensure CHK opened before Loan acct), fix frequency assumpmtions
     # x faker data - address, first name, last name, date of birth, banker names
     # x counterparties - (only for consumer transactions)
     # x transactions - oct through december
