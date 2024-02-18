@@ -20,6 +20,7 @@ import datetime
 import faker
 
 import config
+from dbio import connectors
 
 fake = faker.Faker()
 
@@ -590,11 +591,11 @@ def transactions_3(accounts_df, households_df):
 
                 # outgoing
                 transaction_dict = _add_transaction(transaction_dict, d, 'Internal Transfer',
-                    dep_df.loc[client_1].Account_Nr, dep_df.loc[client_2], -amount)
+                    dep_df.loc[client_1].Account_Nr, dep_df.loc[client_2].Account_Nr, -amount)
 
                 # incoming
                 transaction_dict = _add_transaction(transaction_dict, d, 'Internal Transfer',
-                    dep_df.loc[client_2].Account_Nr, dep_df.loc[client_1], amount)
+                    dep_df.loc[client_2].Account_Nr, dep_df.loc[client_1].Account_Nr, amount)
 
             except KeyError:
                 pass
@@ -653,7 +654,23 @@ def balance_timeseries(accounts_df, transactions_df, init_date=datetime.datetime
             .assign(Net_Change=lambda x: x.Net_Change.fillna(0))  # forward fill NaNs
             )
 
-    return ts_df#.reset_index()
+    return ts_df.reset_index()
+
+
+def write_db(df_dict, db='generic_bank.db'):
+    '''
+    Write SQLite database from dictionary of dataframes:
+        - key = tablename
+        - value = dataframe
+    '''
+
+    cobj = connectors.SQLite(db)  # database connection
+    # write each dataframe to separate table
+
+    for table_, df_ in df_dict.items():
+        cobj.write(df_, table_, if_exists='replace', index=False)
+
+    return 'Done'
 
 
 if __name__ == '__main__':
@@ -663,7 +680,7 @@ if __name__ == '__main__':
 
     # set random seed
     np.random.seed(42)
-    fake.seed_instance(42)
+    m.fake.seed_instance(42)
 
     # generate data
     
@@ -692,8 +709,20 @@ if __name__ == '__main__':
     # account timeseries
     ts_df = m.balance_timeseries(accounts_df, transactions_df, config.snapshot_date)
 
-    
     # validate output characteristics
+    # ?
+
+    # write database
+    df_dict = {'branches': branches_df,
+               'bankers': bankers_df,
+               'clients': clients_df,
+               'households': households_df,
+               'links': links_df,
+               'accounts': accounts_df,
+               'transactions': transactions_df,
+               'account_fact': ts_df,
+                }
+    result = m.write_db(df_dict)
 
     # clients
     # distribution of client join dates by month
