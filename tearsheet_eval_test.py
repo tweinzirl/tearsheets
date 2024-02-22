@@ -26,6 +26,6 @@ if __name__ == '__main__':
     q3 = 'What important roles does {name} have in the community?'
     q4 = 'Summarize all the recent news articles based on their titles'
 
-    # r1 = tu.qa_metadata_filter(q1, vectordb, filter1, eval_metric = [rag_m.faithfulness, rag_m.answer_relevancy])
-    r2 = tu.qa_metadata_filter(q2, vectordb, filter1,
-                                eval_metric = [rag_m.faithfulness, rag_m.answer_relevancy, rag_m.context_relevancy], eval_metric_viz = True)
+    r1 = tu.qa_metadata_filter(q1, vectordb, filter1, eval_metric = [rag_m.faithfulness, rag_m.answer_relevancy])
+    # r2 = tu.qa_metadata_filter(q2, vectordb, filter1,
+    #                             eval_metric = [rag_m.faithfulness, rag_m.answer_relevancy, rag_m.context_relevancy], eval_metric_viz = True)
