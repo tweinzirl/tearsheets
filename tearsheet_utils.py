@@ -17,8 +17,7 @@ from langchain.vectorstores import Chroma
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 # Evaluation
-#from ragas.metrics import faithfulness, answer_relevancy, context_relevancy
-#from ragas.langchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
+import ragas_evaluations as rag
 
 # authentication
 from dotenv import load_dotenv, find_dotenv
@@ -44,27 +43,30 @@ def create_or_load_vectorstore(path, documents=[],
             embedding_function=embedding_function)
     else:
         # clean out existing data
-        for f in glob.glob(os.path.join(path, '**', '*.*'), recursive=True):
-            os.remove(f)
-        vectordb = Chroma.from_documents(documents, embedding_function,
-            persist_directory=path)
-
+        # for f in glob.glob(os.path.join(path, '**', '*.*'), recursive=True):
+        #     os.remove(f)
+        
+        vectordb = Chroma.from_documents(documents, embedding_function)
+    print('Vectordb done...')
     return vectordb
 
 
-def qa_metadata_filter(q, vectordb, filter, top_k=10,
-    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0)):
+def qa_metadata_filter(q, vectordb, filters, top_k=10,
+    llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0),
+    with_eval = None):
     '''
     Perform Q&A given a question `q`, vectorstore `vectordb`, and language
     model `llm`. The `top_k` most relevant documents meeting the requirements
     in `filter` are considered.
+    if Ragas metrics passed to `with_eval`, the result dictionary will contain
+    evaluation scores as well.
     '''
 
     # embed filter in retriever
     retriever = vectordb.as_retriever(
         search_kwargs={"k": top_k,
-                       "filter": filter,})
-
+                       "filter": filters,})
+    
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
@@ -94,6 +96,12 @@ def qa_metadata_filter(q, vectordb, filter, top_k=10,
 
     rag = rag_chain_with_source.invoke(q)  # dict has keys for question, answer, context
 
+    """ # Do something here to add metrics
+    if with_eval:
+        # Ragas Evaluation
+        result = rag.ragas_eval_qa
+    """
+ 
     return rag['answer']  # todo: add parameters to return rag metrics and/or context
 
 
@@ -515,16 +523,16 @@ if __name__ == '__main__':
     for d in junk: print(d.metadata)
 
     # test filter 2: match to lists of values with logical AND
-    # filter_ = {'$and': [{'client_name': {'$in': ['Robert King']}},
-    #         {'doc_type': {'$in': ['linkedin', 'relsci', 'equilar']}}]}
-    # junk = vectordb.similarity_search('summarize the current employers of all people', k=99, filter=filter_)
-    # for d in junk: print(d.metadata)
+    filter_ = {'$and': [{'client_name': {'$in': ['Robert King']}},
+            {'doc_type': {'$in': ['linkedin', 'relsci', 'equilar']}}]}
+    junk = vectordb.similarity_search('summarize the current employers of all people', k=99, filter=filter_)
+    for d in junk: print(d.metadata)
 
     # test create_filter
     filter1 = m.create_filter('Robert King', 'all')
-    # filter2 = m.create_filter('Robert King', 'linkedin')
-    # filter3 = m.create_filter('Robert King', ['linkedin', 'google'])
-    # filter4 = m.create_filter('all', ['google'])
+    filter2 = m.create_filter('Robert King', 'linkedin')
+    filter3 = m.create_filter('Robert King', ['linkedin', 'google'])
+    filter4 = m.create_filter('all', ['google'])
 
     # test Q&A for filters
     q1 = 'What is noteworthy about Robert King?'
@@ -569,24 +577,24 @@ if __name__ == '__main__':
     # r3 = m.qa_metadata_filter(q3, vectordb, filter3)
     # r4 = m.qa_metadata_filter(q4, vectordb, filter4)
 
-    # # test tearsheet bio functions separately
-    # output1 = m.tearsheet_bio_1('Robert King', vectordb)
-    # output2 = m.tearsheet_bio_2('Robert King', output1)
-    # output3 = m.tearsheet_bio_3(output2)
+    # test tearsheet bio functions separately
+    output1 = m.tearsheet_bio_1('Robert King', vectordb)
+    output2 = m.tearsheet_bio_2('Robert King', output1)
+    output3 = m.tearsheet_bio_3(output2)
 
-    # # test tearsheet bio
-    # bio1 = m.tearsheet_bio('Robert King', vectordb)
-    # bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
-    # bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
+    # test tearsheet bio
+    bio1 = m.tearsheet_bio('Robert King', vectordb)
+    bio2 = m.tearsheet_bio('Velvet Throat', vectordb)
+    bio3 = m.tearsheet_bio('Julia Harpman', vectordb)
 
-    # # test tearsheet table functions separately
-    # table1 = m.tearsheet_table('Robert King', vectordb)
-    # table2 = m.tearsheet_table('Velvet Throat', vectordb)
-    # table3 = m.tearsheet_table('Julia Harpman', vectordb)
+    # test tearsheet table functions separately
+    table1 = m.tearsheet_table('Robert King', vectordb)
+    table2 = m.tearsheet_table('Velvet Throat', vectordb)
+    table3 = m.tearsheet_table('Julia Harpman', vectordb)
 
-    # # write tearsheet
-    # html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
-    # #html, output_path = m.write_tearsheet_html('Robert King', bio1, table1)
-    # html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
-    # html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
-    # #html, output_path = m.write_tearsheet_html('Julia Harpman', bio3, table3)
+    # write tearsheet
+    html, output_path = m.generate_tearsheet('Robert King', vectordb)  # generates bio/table internally
+    #html, output_path = m.write_tearsheet_html('Robert King', bio1, table1)
+    html, output_path = m.generate_tearsheet('Velvet Throat', vectordb)
+    html, output_path = m.generate_tearsheet('Julia Harpman', vectordb)
+    #html, output_path = m.write_tearsheet_html('Julia Harpman', bio3, table3)
