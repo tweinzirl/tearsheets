@@ -1,18 +1,59 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jan 11 13:18:11 2024
+'''
+metrics:
 
-@author: local_ergo
-"""
-import numpy as np
+faithfulness (generation): how factually accurate is the answer; requires context and answer
+answer relevancy (generation): how relevant the answer is to the question; requires answer and question
 
-# Evaluation
-from ragas.metrics import (
+context precision (retrieval): S/N ration of context; requires ground_truth, question, and contexts
+context recall (retrieval): does the retrieval have all the relevant information to answer the question; depends on context and ground_truth
+
+context relevance: is context relevant to the question; requires question and context
+'''
+import datasets as hfds  # hugging face datasets
+import ragas
+from ragas.metrics import (  # eval metrics
     faithfulness,
     answer_relevancy,
     context_precision,
     context_recall,
 )
+
+def ragas_eval_qa(rag_dict, eval_metrics_list = ['faithfulness', 'answer_relevancy']):
+    """
+    Parameters
+    ----------
+    rag_dict : dictionary, result from RAG, containing 'question', 'context', and 'answer'
+    eval_metrics_list : List, list of Ragas metrics. The default is [faithfulness, answer_relevancy, context_recall].
+
+    Returns
+    -------
+    result : dictionary, original `result` variable with metrics score added as new fields. 
+    """
+
+    # determine which metrics to use
+    eval_metrics_final = []
+    if 'faithfulness' in eval_metrics_list:
+        eval_metrics_final.append(faithfulness)
+    if 'answer_relevancy' in eval_metrics_list:
+        eval_metrics_final.append(answer_relevancy)
+    if 'context_recall' in eval_metrics_list:
+        eval_metrics_final.append(context_recall)
+    if 'context_precision' in eval_metrics_list:
+        eval_metrics_final.append(context_precision)
+
+    # prepare dataset
+    ds = hfds.Dataset.from_dict({'question': [rag_dict['question']],
+                                 'answer': [rag_dict['answer']],
+                                 'contexts': [[d.page_content for d in rag_dict['context']]],
+                                })
+
+    result = ragas.evaluate(ds, metrics=eval_metrics_final)
+
+    return result
+
+'''
+import numpy as np
 from ragas.langchain.evalchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
 import matplotlib.pyplot as plt
 
@@ -142,3 +183,4 @@ if __name__ == '__main__':
         'Who are Jerrys family memebers?',
         ]
     
+'''
