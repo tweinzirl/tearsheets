@@ -46,7 +46,7 @@ class ChatWithDocsInput(BaseModel):
     english_input: str = Field(..., description="Pass the entire user's natural language question unaltered into this parameter.")
     client_name: str = Field(..., description="Name of client to query for.")
 
-@tool(args_schema=ChatWithDocsInput)
+@tool(args_schema=ChatWithDocsInput, return_direct=True)
 def chat_with_docs(english_input: str,  client_name: str) -> dict:
     # question: should document details go here or in the chat agent prompt?
     """
@@ -72,7 +72,8 @@ def chat_with_docs(english_input: str,  client_name: str) -> dict:
     # create filter and run query
     filter_ = tshu.create_filter(client_name, 'all')
     print(english_input, filter_)
-    response = tshu.qa_metadata_filter(english_input, vectordb, filter_, top_k=5)
+    response = tshu.qa_metadata_filter(english_input, vectordb, filter_, top_k=5,
+                   eval_metrics=['faithfulness', 'answer_relevancy'])
 
     #return f'called chat_with_docs for client {client_name}' #response
     return response
