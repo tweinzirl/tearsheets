@@ -7,17 +7,22 @@ Created on Thu Jan 11 13:18:11 2024
 import numpy as np
 
 # Evaluation
-from ragas.metrics import *
-from ragas.langchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
+from ragas.metrics import (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall,
+)
+from ragas.langchain.evalchain import RagasEvaluatorChain # langchain chain wrapper to convert a ragas metric into a langchain
 import matplotlib.pyplot as plt
 
-def ragas_eval_qa(query, result, eval_metrics_list = [faithfulness, answer_relevancy, context_relevancy], viz = False):
+
+def ragas_eval_qa(result, eval_metrics_list = ['faithfulness', 'answer_relevancy', 'context_recall'], viz = False):
     """
     Parameters
     ----------
-    query : string, question.
-    result : dictionary, result from qa_chain
-    eval_metrics_list : List, list of Ragas metrics. The default is [faithfulness, answer_relevancy, context_relevancy].
+    result : dictionary, result from qa_chain, containing 'question', 'context', and 'answer'
+    eval_metrics_list : List, list of Ragas metrics. The default is [faithfulness, answer_relevancy, context_recall].
     viz : Boolean, If true, the function generated and shows a bar plot of the metrics scores. The default is False.
 
     Returns
@@ -25,21 +30,30 @@ def ragas_eval_qa(query, result, eval_metrics_list = [faithfulness, answer_relev
     result : dictionary, original `result` variable with metrics score added as new fields. 
     """
 
+    # determine which metrics to use
+    eval_metrics_final = []
+    if 'faithfulness' in eval_metrics_list:
+        eval_metrics_final.append(faithfulness)
+    if 'answer_relevancy' in eval_metrics_list:
+        eval_metrics_final.append(answer_relevancy)
+    if 'context_recall' in eval_metrics_list:
+        eval_metrics_final.append(context_recall)
+
     # make eval chains
     eval_chains = {
-        m.name: RagasEvaluatorChain(metric=m) 
-        for m in eval_metrics_list
+        m.name: RagasEvaluatorChain(metric=m, lc_secrets={'openai_api_key':'OPENAI_API_KEY'}) 
+        for m in eval_metrics_final
     }  
     
     for metric, eval_chain in eval_chains.items():
         metric_name = f'{metric}_score'
-        result[metric_name]= round(eval_chain({'query':query,
-                                                 'source_documents':result['source_documents'],
-                                                 'result':result['result']})[metric_name]
+        result[metric_name]= round(eval_chain({'query': result['question'],
+                                                 'source_documents': result['context'],
+                                                 'result': result['answer']})[metric_name]
                                    , 2)
     # Bar plot of the metrics 
     if viz:
-        plot_metric = {k:result[k] for k in [metric.name + '_score' for metric in eval_metrics_list]}
+        plot_metric = {k:result[k] for k in [metric.name + '_score' for metric in eval_metrics_final]}
         plot_metrics_with_values(plot_metric, title = 'RAGAS Metrics')
         
     return result
@@ -69,7 +83,7 @@ def plot_metrics_with_values(metrics_dict, title='RAG Metrics'):
     plt.show()
     
 
-def ragas_eval_qa_avg(eval_questions, qa,  eval_metrics_list = [faithfulness, answer_relevancy, context_relevancy], viz = False):
+def ragas_eval_qa_avg(eval_questions, qa,  eval_metrics_list = [faithfulness, answer_relevancy, context_recall], viz = False):
     """
     Parameters
     ----------

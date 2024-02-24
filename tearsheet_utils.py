@@ -16,13 +16,13 @@ from langchain.vectorstores import Chroma
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-# Evaluation
-import ragas_evaluations as rag
-
 # authentication
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
 
+
+# Evaluation
+import ragas_evaluations as rage
 
 # where Tearsheets are saved
 TEARSHEET_DIR = 'data/tearsheets/tearsheet_{client}.html'
@@ -53,7 +53,7 @@ def create_or_load_vectorstore(path, documents=[],
 
 def qa_metadata_filter(q, vectordb, filters, top_k=10,
     llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0),
-    with_eval = None):
+    eval_metrics=None):
     '''
     Perform Q&A given a question `q`, vectorstore `vectordb`, and language
     model `llm`. The `top_k` most relevant documents meeting the requirements
@@ -96,11 +96,9 @@ def qa_metadata_filter(q, vectordb, filters, top_k=10,
 
     rag = rag_chain_with_source.invoke(q)  # dict has keys for question, answer, context
 
-    """ # Do something here to add metrics
-    if with_eval:
+    if eval_matrics:  # if list is non-empty
         # Ragas Evaluation
-        result = rag.ragas_eval_qa
-    """
+        result = rage.ragas_eval_qa(rag, eval_metrics)
  
     return rag['answer']  # todo: add parameters to return rag metrics and/or context
 
