@@ -14,6 +14,12 @@ what accounts belong to robert king. include their product type
 
 ===========
 
+chart questions:
+
+make a chart of robert king's ach transaction types
+
+===========
+
 Vector db questions
 
 summarize lead partner deals by client Robert King. -> brief answer. Then give the followup for a longer conversational answer: show all the details for the previous answer
