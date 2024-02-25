@@ -209,6 +209,3 @@ You must not include a ? symbol in the returned query.
 You must not include 'Query:' in the returned query.
 Do not use Start_Dt, End_Dt, or Is_Current in the query.
 Unless otherwise requested, add limit 10 to the end of the query.
-
-Only return a query unless there is there is ambiguity in the question. 
-In that case, ask the user to clarify their question. 

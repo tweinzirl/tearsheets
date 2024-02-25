@@ -4,6 +4,7 @@ _ = load_dotenv(find_dotenv())
 import pandas as pd
 import os
 import openai
+openai_client = openai.OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 from sqlalchemy import exc, create_engine, text as sql_text
 import argparse
 import gradio as gr
@@ -61,14 +62,14 @@ def sql_to_df(Message, return_sql=False, Verbose=False, Debug=False):
         print(f'{message_history}')
     
     # pass to LLM    
-    response = openai.ChatCompletion.create(
+    response = openai_client.chat.completions.create(
         model=LLM_MODEL,
         messages=message_history,
         temperature=0
       #  stream=True
     )
 
-    Response = response['choices'][0]['message']['content']
+    Response = response.choices[0].message.content
     message_history.append({'role': 'assistant', 'content': Response})
 
     # now need to query DB

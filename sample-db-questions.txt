@@ -10,7 +10,7 @@ what clients are employed by Stevens Valley School? include as columns employer 
 
 show robert king's checking account balances by date for October 2023. show more than 10
 
-show all checking accounts and their open date for robert king
+what accounts belong to robert king. include their product type
 
 ===========
 
