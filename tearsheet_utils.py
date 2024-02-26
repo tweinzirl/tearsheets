@@ -97,7 +97,7 @@ def qa_metadata_filter(q, vectordb, filters, top_k=10,
     rag = rag_chain_with_source.invoke(q)  # dict has keys for question, answer, context
 
     if eval_metrics:  # if list is non-empty, do ragas Evaluation
-        result = rage.ragas_eval_qa(rag, eval_metrics)
+        result = rage.ragas_eval_qa(query = rag.question, result = rag_chain_with_source, eval_metrics_list = eval_metric, viz = eval_metric_viz)
         eval_str = '; '.join([f'{metric}: {round(value, 2)}' for metric, value in result.items()])
         rag['answer'] += f' ({eval_str})'
 
