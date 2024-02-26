@@ -53,7 +53,7 @@ def create_or_load_vectorstore(path, documents=[],
 
 def qa_metadata_filter(q, vectordb, filters, top_k=10,
     llm=ChatOpenAI(model_name='gpt-3.5-turbo', temperature=0),
-    eval_metrics=None):
+    eval_metrics=None, eval_metric_viz = False):
     '''
     Perform Q&A given a question `q`, vectorstore `vectordb`, and language
     model `llm`. The `top_k` most relevant documents meeting the requirements
@@ -97,8 +97,11 @@ def qa_metadata_filter(q, vectordb, filters, top_k=10,
     rag = rag_chain_with_source.invoke(q)  # dict has keys for question, answer, context
 
     if eval_metrics:  # if list is non-empty, do ragas Evaluation
-        result = rage.ragas_eval_qa(query = rag.question, result = rag_chain_with_source, eval_metrics_list = eval_metric, viz = eval_metric_viz)
-        eval_str = '; '.join([f'{metric}: {round(value, 2)}' for metric, value in result.items()])
+        eval_str = ''
+        result = rage.ragas_eval_qa(query = rag.question, result = rag_chain_with_source, eval_metrics_list = eval_metrics, viz = eval_metric_viz)
+        for metric, value in result.items():
+            if metric in eval_metrics:
+                eval_str = '; '.join(f'{metric}: {round(value, 2)}')
         rag['answer'] += f' ({eval_str})'
 
     return rag['answer']  # todo: add parameters to return rag metrics and/or context
