@@ -7,12 +7,12 @@ import openai
 
 # langchain
 from langchain.chains import RetrievalQA
-from langchain.document_loaders import UnstructuredHTMLLoader
 from langchain.prompts import PromptTemplate
 from langchain.schema import HumanMessage, StrOutputParser, SystemMessage
-from langchain_core.runnables import RunnableParallel
 from langchain.schema.runnable import RunnablePassthrough
-from langchain.vectorstores import Chroma
+from langchain_core.runnables import RunnableParallel
+from langchain_community.document_loaders import UnstructuredHTMLLoader
+from langchain_community.vectorstores import Chroma
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
