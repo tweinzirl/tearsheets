@@ -323,8 +323,9 @@ if __name__ == '__main__':
         '''
         message_history = []
         for human, ai in history:
+            # history objects must be strings, parse accordingly
             message_history.append(HumanMessage(content=human))
-            message_history.append(AIMessage(content=ai))
+            message_history.append(AIMessage(content=ai[0] if isinstance(ai, tuple) else ai))
 
         agent.agent.memory.chat_memory = ChatMessageHistory(messages=message_history)
 
