@@ -2,6 +2,9 @@
 import pandas as pd
 
 import openai
+from openai import OpenAI
+
+client = OpenAI()
 
 from scipy import spatial  # for calculating vector similarities for search
 from ast import literal_eval # Function used to cast embedding vectors stored as strings to arrays
@@ -29,24 +32,24 @@ class OpenAI_Embeddings():
             if ntokens < self._Max_Tokens:  
                 try:
                     #Make your OpenAI API request here
-                    response= openai.Embedding.create(input=[Text],model=self._Model)
-                except openai.error.APIError as e:
+                    response= client.embeddings.create(input=[Text],model=self._Model)
+                except openai.APIError as e:
                     #Handle API error here, e.g. retry or log
                     print(f"OpenAI API returned an API Error: {e}")
                     return []
-                except openai.error.APIConnectionError as e:
+                except openai.APIConnectionError as e:
                     #Handle connection error here
                     print(f"Failed to connect to OpenAI API: {e}")
                     return []
-                except openai.error.RateLimitError as e:
+                except openai.RateLimitError as e:
                     #Handle rate limit error (we recommend using exponential backoff)
                     print(f"OpenAI API request exceeded rate limit: {e}")
                     return []
                 
-                embeddings = response['data'][0]['embedding']
-                cost, tokens = OpenAI_Embeddings_Cost(response, self._Token_Cost, self._Model)
-                if Verbose:
-                    print(f'Embeddings Cost {cost} and tokens {tokens}')
+                embeddings = response.data[0].embedding
+                #cost, tokens = OpenAI_Embeddings_Cost(response, self._Token_Cost, self._Model)
+                #if Verbose:
+                #    print(f'Embeddings Cost {cost} and tokens {tokens}')
                 return embeddings
 
 #############################################################################

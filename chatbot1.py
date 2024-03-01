@@ -8,6 +8,7 @@
 import tearsheet_utils as tshu
 import email_utils as emut
 from nl2sql import nl2sql_util
+from nl2viz import nl2viz_util
 
 # system imports
 import os
@@ -16,7 +17,6 @@ import argparse
 
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
-openai.api_key = os.environ['OPENAI_API_KEY']
 
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad import format_to_openai_functions
@@ -39,6 +39,10 @@ import gradio
 vectordb = tshu.create_or_load_vectorstore('data/chroma',
     tshu.load_persona_html(), 
     override=False)
+
+
+def capitalize(name):
+    return ' '.join([w.capitalize() for w in name.split(' ')])
  
 
 # define chat_with_docs function
@@ -67,7 +71,7 @@ def chat_with_docs(english_input: str,  client_name: str) -> dict:
     'wealthx' - For individual and family net worth, interests, passions, hobbies.
     """
 
-    client_name = ' '.join([w.capitalize() for w in client_name.split(' ')])
+    client_name = capitalize(client_name)
 
     # create filter and run query
     filter_ = tshu.create_filter(client_name, 'all')
@@ -92,7 +96,7 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
     freshly remade.
     """
 
-    client_name = ' '.join([w.capitalize() for w in client_name.split(' ')])
+    client_name = capitalize(client_name)
 
     # generate
     html, output_path = tshu.generate_tearsheet(client_name, vectordb, override=False)
@@ -100,7 +104,7 @@ def gen_send_tearsheet(client_name: str, email: str) -> dict:
     # todo: format / send email
     msg, success = emut.send_message(html, f'Your Tearsheet For {client_name}', email, verbose=False)
 
-    return f'called gen_send_tearsheet for client {client_name} and recipient {email}: {success}' #response
+    return f'called gen_send_tearsheet for client {client_name} and recipient {email}: {success}'
 
 
 # define generate_and_send_top3 function
@@ -134,7 +138,6 @@ def send_top3_email(email: str ='') -> dict:
     return f'called gen_send_top3 for recipient {email}: {success}' #response
 
 
-
 # what clients do I have?
 @tool
 def list_my_clients() -> dict:
@@ -144,7 +147,6 @@ def list_my_clients() -> dict:
 
     md = vectordb.get()['metadatas']
     return list(set([doc['client_name'] for doc in md]))
-
 
 
 # define table_from_db
@@ -180,7 +182,7 @@ def chat_with_db(english_input: str) -> dict:
      - transactions
 
     Inputs:
-        query - Should be user's original English question unaltered.
+        english_input - Should be user's original English question unaltered.
 
     Output: The resulting dataframe is returned in HTML format.
     """
@@ -192,6 +194,33 @@ def chat_with_db(english_input: str) -> dict:
 
 
 # define plot_from_db
+class ChartFromDB(BaseModel):
+    english_input: str = Field(..., description="Pass the entire user's natural language question unaltered into this parameter.")
+    client_name: str = Field(..., description="Name of client to query for.")
+
+@tool(args_schema=ChartFromDB, return_direct=True)
+def chart_from_db(english_input: str,  client_name: str) -> dict:
+    # question: should document details go here or in the chat agent prompt?
+    """
+    Create a visual chart of data for a given client.
+
+    Inputs:
+        english_input - Should be user's original input unaltered.
+        client_name - The name of the client to query for.
+
+    Data is currently limited to transactions. 
+
+    Output: A filepath. The chat window renders it as a chart.
+    """
+
+    client_name = capitalize(client_name)
+
+    # create filter and run query
+    img_path, chart_code, summary = nl2viz_util.vizgen(client_name, english_input)
+
+    #return path only
+    return (img_path,)
+
 
 # define custom agent as class
 class ChatAgent:
@@ -199,7 +228,7 @@ class ChatAgent:
 
     def __init__(self):
         # update this list of tools as more are added
-        tools = [chat_with_docs, chat_with_db, gen_send_tearsheet, list_my_clients, send_top3_email]
+        tools = [chat_with_docs, chat_with_db, chart_from_db, gen_send_tearsheet, list_my_clients, send_top3_email]
         openai_functions = [convert_to_openai_function(f) for f in tools]
 
         # prompt
@@ -294,8 +323,9 @@ if __name__ == '__main__':
         '''
         message_history = []
         for human, ai in history:
+            # history objects must be strings, parse accordingly
             message_history.append(HumanMessage(content=human))
-            message_history.append(AIMessage(content=ai))
+            message_history.append(AIMessage(content=ai[0] if isinstance(ai, tuple) else ai))
 
         agent.agent.memory.chat_memory = ChatMessageHistory(messages=message_history)
 

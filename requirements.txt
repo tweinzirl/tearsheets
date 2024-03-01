@@ -1,12 +1,15 @@
 gradio
 langchain
-langchain_openai
+langchain-openai
+langchain-community
 matplotlib
 numpy
 openai
+openpyxl
 pandas
 pydantic
 python-doten
+ragas
 scipy
 SQLAlchemy
 tiktoken
