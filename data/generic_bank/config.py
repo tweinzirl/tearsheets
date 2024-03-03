@@ -29,6 +29,12 @@ assert (p_person + p_fin_business + p_nonfin_business + p_nonprofit) == 1
 # for 'DL' will need to ensure D is CHK
 product_mix = 6*['D'] + 4*['DL'] + 2*['DLW'] + 0*['L'] + 0*['LW'] + 3*['W']
 
+# client wealth tiers
+p_wealth_tiers = {'low': 0.50, 
+                  'mid': 0.45, 
+                  'high': 0.05
+                 }
+
 # household parmaters
 hh_size_distribution = 6*[1] + [2,2,3,4]
 
@@ -57,16 +63,15 @@ assert round(sum(f_org_accts['Loans'].values()), 1) == 1
 assert round(sum(f_org_accts['Wealth'].values()), 1) == 1
 
 # account balances (for each acct type: [avg, std] pairs for use with gaussian dist)
-# TODO evaluate avg bal by 3 groups: affluent, wealthy, regular (e.g. <100K in dep, >100K and < 1M, >1M) (or alt use percentiles e.g. 50%, 90%)
-# would need 'wealth_status' flag or assign random probabilities at bal assignment time (then generate status flag from data)
-bal_indiv_accts = {'Deposits': {'CHK': [90, 90/5], 'SV': [130, 130/5], 'CD': [160, 160/5]}, 
-                   'Loans': {'SFR': [1100, 1100/5], 'HELOC': [400, 400/5], 'MF': [0, 0/5], 'CRE': [1600, 1600/5], 'LOC': [0, 0/5]},
-                   'Wealth': {'FRIM': [1400, 1400/5], 'FRS': [1100, 1100/5]}
+# TODO def avg bal assumptions by wealth tiers (high, mid, low) (e.g. <100K in dep, >100K and < 1M, >1M ; or alt use percentiles e.g. 50%, 90%)
+bal_indiv_accts = {'Deposits': {'CHK': [100, 100/5], 'SV': [200, 200/5], 'CD': [300, 300/5]}, 
+                   'Loans': {'SFR': [1500, 1500/5], 'HELOC': [500, 500/5], 'MF': [0, 0/5], 'CRE': [2000, 2000/5], 'LOC': [0, 0/5]},
+                   'Wealth': {'FRIM': [2000, 2000/5], 'FRS': [1000, 1000/5]}
                   }
 
-bal_org_accts = {'Deposits': {'CHK': [350, 350/5], 'SV': [1900, 1900/5], 'CD': [2100, 2100/5]}, 
-                 'Loans': {'SFR': [1100, 1100/5], 'HELOC': [0, 0/5], 'MF': [3300, 3300/5], 'CRE': [3800, 3800/5], 'LOC': [800, 800/5]},
-                 'Wealth': {'FRIM': [2500, 2500/5], 'FRS': [3800, 3800/5]}
+bal_org_accts = {'Deposits': {'CHK': [500, 500/5], 'SV': [2000, 2000/5], 'CD': [3000, 3000/5]}, 
+                 'Loans': {'SFR': [1500, 1500/5], 'HELOC': [0, 0/5], 'MF': [4000, 4000/5], 'CRE': [5000, 5000/5], 'LOC': [1000, 1000/5]},
+                 'Wealth': {'FRIM': [3000, 3000/5], 'FRS': [4000, 4000/5]}
                 }
 
 # transactions

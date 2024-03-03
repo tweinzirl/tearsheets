@@ -119,6 +119,7 @@ def clients(n):
         size=n
         )
     product_mix = np.random.choice(config.product_mix, size=n)  # decimal probs
+    wealth_tier = np.random.choice(list(config.p_wealth_tiers.keys()), p=list(config.p_wealth_tiers.values()), size=n)  # currently no indiv/org split
 
     # client_name/address
     name, address, birthday, join_date = n*[''], n*[''], n*[''], n*['']
@@ -138,9 +139,9 @@ def clients(n):
         join_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
      
 
-    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix, name, address, birthday, join_date]).T, 
+    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix, name, address, birthday, join_date, wealth_tier]).T, 
                       columns=['Client_ID', 'Client_Type', 'Product_Mix', 'Client_Name', 'Street_Address', 
-                               'Birthday', 'Join_Date'])
+                               'Birthday', 'Join_Date', 'Wealth'])
 
     return df.astype({'Client_ID': int})
 
@@ -296,7 +297,6 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         clt = row.Client_Type
         n = int(sum([n_D, n_L, n_W]))
 
-        # TODO add CHK for client with Loan and no checking
         # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],
@@ -730,8 +730,9 @@ if __name__ == '__main__':
 
 
     # todo:
-    # x clients table - add join date
-    # accounts table - x add account open date (ensure CHK opened before Loan acct), fix frequency assumpmtions
+    # clients table - add join date (x), add 'wealth' flag (low, mid, high) tiers (x)
+    # accounts table - x add account open date (ensure CHK opened before Loan acct), fix frequency assumpmtions, 
+    #    rename pdt_types (e.g. have pdt_code and pdt_label), add int rates
     # x faker data - address, first name, last name, date of birth, banker names
     # x counterparties - (only for consumer transactions)
     # x transactions - oct through december
@@ -741,6 +742,7 @@ if __name__ == '__main__':
       # - transfers between households in/out when hh_size > 1
     # accounts timeseries table, show account number and balance over all dates, Oct 1 to Dec 31
     # write db and evaluate size
+    # converge schema to current schema used by LLM
     # host on hugging face
     # add myportfolio queries with aggregates by region, banker, etc.
     # add recommendations with logic based on generic bank data 
