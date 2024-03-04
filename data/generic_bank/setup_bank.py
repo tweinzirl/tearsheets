@@ -20,7 +20,10 @@ import datetime
 import faker
 
 import config
-from dbio import connectors
+
+try:
+    from dbio import connectors
+except ImportError: print("No module named 'dbio', so can't use write_db()")
 
 fake = faker.Faker()
 
@@ -93,6 +96,9 @@ def assign_personnel_to_branches(df):
 
     # unique banker id
     banker_df.Banker_ID = range(1,banker_df.shape[0]+1,1)
+    # login
+    banker_df['Login'] = banker_df['Banker_Name'].str.split(" ", n=1).str[0].str[0].str.lower() + \
+                              banker_df['Banker_Name'].str.split(" ", n=1).str[1].str.lower()
 
     return df, banker_df
 
@@ -106,9 +112,15 @@ def clients(n):
         - Client_ID
         - Client_Type
         - Product_Mix
-        - Client_Name
+        - Name
+        - SSN (for people) / EIN (for orgs)
+        - Employer (generated randomly)
+        - Employer NAICS code (level 3, assigned randomly)
+        - Title (assigned randomly vs empoyer and wealth tier)
         - Street_Address (generate state/city later to be consistent with region)
         - Birthday (for people)
+        - Start date / End date
+        - Wealth status
     '''
 
     n = int(n)
@@ -122,26 +134,57 @@ def clients(n):
     wealth_tier = np.random.choice(list(config.p_wealth_tiers.keys()), p=list(config.p_wealth_tiers.values()), size=n)  # currently no indiv/org split
 
     # client_name/address
-    name, address, birthday, join_date = n*[''], n*[''], n*[''], n*['']
+    name, first_name, last_name, ssn, employer, client_naics, client_title, address, birthday, \
+        client_start_date = n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*['']
     for i in range(n):
         if client_type[i] == 'Person':
+            # TODO use first_name / last_name generators for names to avoid odd entries
             name[i] = fake.name()
+            first_name[i] = name[i].split(" ", 1)[0]
+            last_name[i] = name[i].split(" ", 1)[1]
+            ssn[i] = fake.ssn()
+            # employer random generated for each client 
+            # TODO create a list of employers and draw from that list 
+            employer[i] = fake.company()
+            client_naics[i] = np.random.choice(config.naics3)
+            # currently no check for consistency between wealth tier and generated title
+            # TODO create list of tiltes (esp. for high tier) and draw from those
+            client_title[i] = fake.job()
             bday = fake.date_between(datetime.datetime(1945,1,1), pd.to_datetime('today').date())
             birthday[i] = bday.strftime('%m/%d')
         elif client_type[i].find('Business') != -1:
             name[i] = fake.company()
+            first_name[i] = np.nan
+            last_name[i] = np.nan
+            ssn[i] = fake.ein()
+            employer[i] = np.nan
+            client_naics[i] = np.nan
+            client_title[i] = np.nan
             birthday[i] = np.nan
         else:
             name[i] = fake.last_name() + ' School'
+            first_name[i] = np.nan
+            last_name[i] = np.nan
+            ssn[i] = fake.ein()
+            employer[i] = np.nan
+            client_naics[i] = np.nan
+            client_title[i] = np.nan
             birthday[i] = np.nan
         
         address[i] = fake.street_address()  # just street address, apply region later
-        join_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
-     
+        client_start_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
 
-    df = pd.DataFrame(np.array([range(1,n+1, 1), client_type, product_mix, name, address, birthday, join_date, wealth_tier]).T, 
-                      columns=['Client_ID', 'Client_Type', 'Product_Mix', 'Client_Name', 'Street_Address', 
-                               'Birthday', 'Join_Date', 'Wealth'])
+    # initialize derived / empty fields
+    client_cat, client_end_date, is_current = n*[np.nan], n*[np.nan], n*[np.nan]
+    # create dataframe
+    df = pd.DataFrame(np.array([range(1,n+1, 1), client_cat, client_type, product_mix, name, first_name, last_name, 
+                                ssn, employer, client_naics, client_title, address, birthday, 
+                                client_start_date, client_end_date, is_current, wealth_tier]).T, 
+                      columns=['Client_ID', 'Client_Category', 'Client_Type', 'Product_Mix', 'Name', 'First_Name', 'Last_Name', 
+                               'SSN', 'Employer', 'Employer_NAICS', 'Title', 'Street_Address', 'Birthday', 
+                               'Start_Date', 'End_Date', 'Is_Current', 'Wealth'])
+    df['Client_Category'] = df['Client_Type'].map({'Person': 'Person'}).fillna('Organization')
+    df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0)
 
     return df.astype({'Client_ID': int})
 
@@ -253,11 +296,11 @@ def account_types():
     '''
     # TODO create this table from config dict instead
     data_dict = {'Account_Category': 3*['Deposits'] + 5*['Loans'] + 2*['Wealth'],
-                 'Account_Type': ['CHK', 'SV', 'CD'] + ['SFR', 'HELOC', 'MF', 'CRE', 'LOC'] + ['FRIM', 'FRS'],
-                 'Account_Description': ['Checking', 'Saving', 'Certificate of Deposit'] +
-                                        ['Single Family Residential', 'Home Equity Line of Credit', 'Multifamily',
-                                         'Commercial Real Estate', 'Line of Credit'] +
-                                        ['FRIM', 'FRS']
+                 'Account_Type': ['CHK', 'SV', 'CD'] + ['SFR', 'PLOC', 'PLN', 'CRE', 'BLOC'] + ['FRIM', 'BKG'],
+                 'Account_Description': ['Checking', 'Savings', 'Certificate of Deposit'] +
+                                        ['Consumer Mortgage', 'Consumer Line of Credit', 'Consumer Loan',
+                                         'Commercial Mortgage', 'Business Line of Credit'] +
+                                        ['FRIM', 'Brokerages']
                 }
 
     acct_types_df = pd.DataFrame(data_dict)
@@ -309,7 +352,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # assign opening acct balance based on avg/sd defined in config (separate for individuals / orgs)
         # assign bankers to accounts (equal probabilies per account category, no individual / org split)
         # assign acct open date
-        acct_val = []; bal_val = []; banker_val = []; opendt_val = []
+        acct_val = []; bal_val = []; banker_val = []; opendt_val = []; client_primary_banker_val = []
         for idx_, row_ in row_df.iterrows():
             # if row_['Account_Category'] != 'Deposits': continue  # for debugging
             if row.Client_Type == 'Person':
@@ -334,36 +377,47 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
                                                scale=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][1], 
                                                size=1)[0], 1)
             # no individual / org split for banker assignment
+            # TODO for given client, choose bankers only from one region
             banker_val_sel = np.random.choice(
                 list(l_bankers[row_['Account_Category']]),
                 size=1, p=f_bankers[row_['Account_Category']])
+            # assign primary banker to client relationship (by def: D banker is primary, if no DL then W banker)
+            if idx_ == 0 and row_['Account_Category'] == 'Deposits': 
+                client_primary_banker_val_sel = True
+            elif idx_ == 0 and row_['Account_Category'] == 'Wealth':
+                client_primary_banker_val_sel = True
+            elif idx_ == 0:
+                client_primary_banker_val_sel = True
+            else: 
+                client_primary_banker_val_sel = False
             # acct open date (assumes D is first in list)
             # TODO if idx = 0 and CHK, then use join date; other accounts use date between open date and 2 years from open date
             if idx_ == 0 and row_['Account_Category'] == 'Deposits': 
                 ## if client has D, then client opened D acct on join date
-                opendt_val_sel = row['Join_Date']
+                opendt_val_sel = row['Start_Date']
             elif idx_ == 0 and row_['Account_Category'] != 'Deposits':
-                ## if client has no D, then assume client opened L/W acct on join date (note that per config L should always have D)
-                ## for non-CHK accounts, might need to rewrite logic if we can have LW first and D second in the df
-                opendt_val_sel = row['Join_Date']
+                ## if client has no D (hence no L), then assume client opened W acct on join date
+                ## assumes Deposit acct is 1st in df (for non-CHK accounts, would need to rewrite logic if we can have LW first and D second in the df)
+                opendt_val_sel = row['Start_Date']
             else: 
                 ## for idx >= 1, choose random date within 2 years from join date (or up to today, whichever comes first)
                 # manually handle 2/29 nonsense
-                if row['Join_Date'].strftime("%m-%d") == '02-29': 
-                    repl_day = row['Join_Date'].day - 1
+                if row['Start_Date'].strftime("%m-%d") == '02-29': 
+                    repl_day = row['Start_Date'].day - 1
                 else: 
-                    repl_day = row['Join_Date'].day
-                opendt_val_sel = fake.date_between(row['Join_Date'], 
-                                                   min(row['Join_Date'].replace(year=row['Join_Date'].year + 2, day=repl_day), 
+                    repl_day = row['Start_Date'].day
+                opendt_val_sel = fake.date_between(row['Start_Date'], 
+                                                   min(row['Start_Date'].replace(year=row['Start_Date'].year + 2, day=repl_day), 
                                                        pd.to_datetime('today').date()))
             # collect selections
             acct_val.append(acct_val_sel[0])
             bal_val.append(bal_val_sel)
             banker_val.append(banker_val_sel[0])
+            client_primary_banker_val.append(client_primary_banker_val_sel)
             opendt_val.append(opendt_val_sel)
         
         # Init_Balance: Initial Balance e.g. as of 10/1/2023
-        row_df = row_df.assign(Account_Type = acct_val, Init_Balance = bal_val, Banker_ID = banker_val,
+        row_df = row_df.assign(Account_Type = acct_val, Init_Balance = bal_val, Banker_ID = banker_val, Primary_Banker = client_primary_banker_val,
                                Open_Date = opendt_val)
         accounts_df = pd.concat([accounts_df, row_df])
 
@@ -726,13 +780,17 @@ if __name__ == '__main__':
 
     # clients
     # distribution of client join dates by month
-    # print(clients_df['Join_Date'].groupby(pd.to_datetime(clients_df['Join_Date']).dt.strftime('%Y-%m')).agg('count').to_string())
+    # print(clients_df['Start_Date'].groupby(pd.to_datetime(clients_df['Start_Date']).dt.strftime('%Y-%m')).agg('count').to_string())
 
 
     # todo:
-    # clients table - add join date (x), add 'wealth' flag (low, mid, high) tiers (x)
-    # accounts table - x add account open date (ensure CHK opened before Loan acct), fix frequency assumpmtions, 
-    #    rename pdt_types (e.g. have pdt_code and pdt_label), add int rates
+    # bankers table - (x) add login user
+    # clients table - (x) add join date, (x) add 'wealth' flag (low, mid, high) tiers, (x) assign primary banker, (x) add NAICS and (x) is_Current
+    #    fix birthday to be birthdate (might need to check consistency with HH)
+    # accounts table - (x) add account open date (ensure CHK opened before Loan acct), 
+    #    rename pdt_types (e.g. have pdt_code and pdt_label), add int rates, 
+    #    get the wealth tiers working when assign balances, 
+    #    assign bankers to accounts by region (i.e. client has only accounts in one region)
     # x faker data - address, first name, last name, date of birth, banker names
     # x counterparties - (only for consumer transactions)
     # x transactions - oct through december
