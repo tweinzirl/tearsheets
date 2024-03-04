@@ -29,6 +29,12 @@ assert (p_person + p_fin_business + p_nonfin_business + p_nonprofit) == 1
 # for 'DL' will need to ensure D is CHK
 product_mix = 6*['D'] + 4*['DL'] + 2*['DLW'] + 0*['L'] + 0*['LW'] + 3*['W']
 
+# client wealth tiers
+p_wealth_tiers = {'low': 0.50, 
+                  'mid': 0.45, 
+                  'high': 0.05
+                 }
+
 # household parmaters
 hh_size_distribution = 6*[1] + [2,2,3,4]
 
@@ -36,10 +42,9 @@ hh_size_distribution = 6*[1] + [2,2,3,4]
 f_business_owner_link = 0.05
 
 # account frequencies for individuals
-# TODO fix frequencies using counts from SQL query
 f_indiv_accts = {'Deposits': {'CHK': 0.60, 'SV': .15, 'CD': .25}, 
-                 'Loans': {'SFR': 0.80, 'HELOC': 0.15, 'MF': 0, 'CRE': 0.05, 'LOC': 0},
-                 'Wealth': {'FRIM': 0.70, 'FRS': 0.30}
+                 'Loans': {'SFR': 0.75, 'PLOC': 0.15, 'PLN': 0.05, 'CRE': 0.05, 'BLOC': 0},
+                 'Wealth': {'FRIM': 0.70, 'BKG': 0.30}
                 }
 # TODO use a loop for the asserts
 # TODO add check that all acct dicts have the same structure (use .keys() and loop over dict)
@@ -49,24 +54,24 @@ assert round(sum(f_indiv_accts['Wealth'].values()), 1) == 1
 
 # account frequencies for organizations
 f_org_accts = {'Deposits': {'CHK': 0.70, 'SV': .20, 'CD': .10}, 
-               'Loans': {'SFR': 0.15, 'HELOC': 0, 'MF': 0.25, 'CRE': 0.55, 'LOC': 0.05}, 
-               'Wealth': {'FRIM': 0.70, 'FRS': 0.30}
+               'Loans': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'BLOC': 0.05}, 
+               'Wealth': {'FRIM': 0.70, 'BKG': 0.30}
               }
 assert round(sum(f_org_accts['Deposits'].values()), 1) == 1
 assert round(sum(f_org_accts['Loans'].values()), 1) == 1
 assert round(sum(f_org_accts['Wealth'].values()), 1) == 1
 
 # account balances (for each acct type: [avg, std] pairs for use with gaussian dist)
-# TODO evaluate avg bal by 3 groups: affluent, wealthy, regular (e.g. <100K in dep, >100K and < 1M, >1M) (or alt use percentiles e.g. 50%, 90%)
-# would need 'wealth_status' flag or assign random probabilities at bal assignment time (then generate status flag from data)
-bal_indiv_accts = {'Deposits': {'CHK': [90, 90/5], 'SV': [130, 130/5], 'CD': [160, 160/5]}, 
-                   'Loans': {'SFR': [1100, 1100/5], 'HELOC': [400, 400/5], 'MF': [0, 0/5], 'CRE': [1600, 1600/5], 'LOC': [0, 0/5]},
-                   'Wealth': {'FRIM': [1400, 1400/5], 'FRS': [1100, 1100/5]}
+# TODO def avg bal assumptions by wealth tiers (high, mid, low) (e.g. <100K in dep, >100K and < 1M, >1M ; or alt use percentiles e.g. 50%, 90%)
+#      add another nested dict to product code: {'low': [20, 20/5], 'mid': [100, 100/5], 'high': [5000, 5000/5]}
+bal_indiv_accts = {'Deposits': {'CHK': [100, 100/5], 'SV': [200, 200/5], 'CD': [300, 300/5]}, 
+                   'Loans': {'SFR': [1500, 1500/5], 'PLOC': [500, 500/5], 'PLN': [300, 300/5], 'CRE': [2000, 2000/5], 'BLOC': [0, 0/5]},
+                   'Wealth': {'FRIM': [2000, 2000/5], 'BKG': [1000, 1000/5]}
                   }
 
-bal_org_accts = {'Deposits': {'CHK': [350, 350/5], 'SV': [1900, 1900/5], 'CD': [2100, 2100/5]}, 
-                 'Loans': {'SFR': [1100, 1100/5], 'HELOC': [0, 0/5], 'MF': [3300, 3300/5], 'CRE': [3800, 3800/5], 'LOC': [800, 800/5]},
-                 'Wealth': {'FRIM': [2500, 2500/5], 'FRS': [3800, 3800/5]}
+bal_org_accts = {'Deposits': {'CHK': [500, 500/5], 'SV': [2000, 2000/5], 'CD': [3000, 3000/5]}, 
+                 'Loans': {'SFR': [1500, 1500/5], 'PLOC': [0, 0/5], 'PLN': [0, 0/5], 'CRE': [5000, 5000/5], 'BLOC': [1000, 1000/5]},
+                 'Wealth': {'FRIM': [3000, 3000/5], 'BKG': [4000, 4000/5]}
                 }
 
 # transactions
@@ -77,3 +82,12 @@ transactor_suffix = ['Store', 'Mart', 'R US', '& Co', 'And More', 'Village', 'Fo
 
 # timeseries
 snapshot_date = datetime.datetime(2023, 9, 30)  # date of Init_Balance
+
+# NAICS level 3 codes
+# TODO add names
+naics3 = [111, 112, 113, 114, 115, 211, 212, 213, 221, 236, 237, 238, 311, 312, 313, 314, 315, 316, 
+          321, 322, 323, 324, 325, 326, 327, 331, 332, 333, 334, 335, 336, 337, 339, 
+          411, 412, 413, 414, 415, 416, 417, 418, 419, 441, 442, 443, 444, 445, 446, 447, 448, 
+          451, 452, 453, 454, 481, 482, 483, 484, 485, 486, 487, 488, 491, 492, 493, 
+          511, 512, 515, 517, 518, 519, 521, 522, 523, 524, 526, 531, 532, 533, 541, 551, 561, 562, 
+          611, 621, 622, 623, 624, 711, 712, 713, 721, 722, 811, 812, 813, 814]
