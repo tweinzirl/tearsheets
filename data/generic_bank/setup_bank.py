@@ -32,8 +32,7 @@ def regions(n):
     '''Return n distinct regions and regional managers'''
     x = np.arange(1, n+1, 1)
     df = pd.DataFrame(np.array([x,x]).T, columns=['Region_Number', 'Regional_Manager'])
-    assert n <= len(config.l_regions), "n cannot exceed nr of region names defined in config"
-    reg_nm = config.l_regions[0:n]
+    reg_nm = config.l_regions_sel
     df = df.assign(Region_Name = reg_nm)
     return df
 
@@ -82,9 +81,11 @@ def assign_personnel_to_branches(df):
         n_rm = int(row.N_loan_ofcr)
         n_wa = int(row.N_wealth_ofcr)
         br = row.Branch_Number
+        rgn = row.Region_Name
         n = int(row.Headcount)
 
         data_dict = {'Branch_Number': n*[br],
+                     'Region': n*[rgn],
                      'Banker_Type': n_dep*['Deposits'] + n_rm*['Loans'] + n_wa*['Wealth'],
                      'Banker_ID': range(1,n+1,1),
                      'Banker_Name': [fake.first_name() + ' ' + fake.last_name() for _ in range(n)],
@@ -115,7 +116,7 @@ def clients(n):
         - Name
         - SSN (for people) / EIN (for orgs)
         - Employer (generated randomly)
-        - Employer NAICS code (level 3, assigned randomly)
+        - NAICS code (level 2, assigned randomly to companies)
         - Title (assigned randomly vs empoyer and wealth tier)
         - Street_Address (generate state/city later to be consistent with region)
         - Birthday (for people)
@@ -134,19 +135,19 @@ def clients(n):
     wealth_tier = np.random.choice(list(config.p_wealth_tiers.keys()), p=list(config.p_wealth_tiers.values()), size=n)  # currently no indiv/org split
 
     # client_name/address
-    name, first_name, last_name, ssn, employer, client_naics, client_title, address, birthday, \
-        client_start_date = n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*['']
+    name, first_name, last_name, ssn, employer, client_naics, client_title, address, client_region, birthday, \
+        client_start_date = n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*[''], n*['']
     for i in range(n):
         if client_type[i] == 'Person':
             # TODO use first_name / last_name generators for names to avoid odd entries
             name[i] = fake.name()
             first_name[i] = name[i].split(" ", 1)[0]
             last_name[i] = name[i].split(" ", 1)[1]
+            client_naics[i] = np.nan
             ssn[i] = fake.ssn()
             # employer random generated for each client 
             # TODO create a list of employers and draw from that list 
             employer[i] = fake.company()
-            client_naics[i] = np.random.choice(config.naics3)
             # currently no check for consistency between wealth tier and generated title
             # TODO create list of tiltes (esp. for high tier) and draw from those
             client_title[i] = fake.job()
@@ -156,32 +157,37 @@ def clients(n):
             name[i] = fake.company()
             first_name[i] = np.nan
             last_name[i] = np.nan
+            if client_type[i] == 'Business - Finance':
+                client_naics[i] = 52  ## 'Finance and Insurance'
+            elif client_type[i] == 'Business - Other':
+                while client_naics[i] == '' or client_naics[i] == 52:
+                    client_naics[i] = np.random.choice(config.naics2_cd, p=config.naics2_p)
             ssn[i] = fake.ein()
             employer[i] = np.nan
-            client_naics[i] = np.nan
             client_title[i] = np.nan
             birthday[i] = np.nan
         else:
             name[i] = fake.last_name() + ' School'
             first_name[i] = np.nan
             last_name[i] = np.nan
+            client_naics[i] = 61  ## 'Educational Services'
             ssn[i] = fake.ein()
             employer[i] = np.nan
-            client_naics[i] = np.nan
             client_title[i] = np.nan
             birthday[i] = np.nan
         
         address[i] = fake.street_address()  # just street address, apply region later
+        client_region[i] = np.random.choice(config.l_regions_sel)
         client_start_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
 
     # initialize derived / empty fields
     client_cat, client_end_date, is_current = n*[np.nan], n*[np.nan], n*[np.nan]
     # create dataframe
     df = pd.DataFrame(np.array([range(1,n+1, 1), client_cat, client_type, product_mix, name, first_name, last_name, 
-                                ssn, employer, client_naics, client_title, address, birthday, 
+                                client_naics, ssn, employer, client_title, address, client_region, birthday, 
                                 client_start_date, client_end_date, is_current, wealth_tier]).T, 
                       columns=['Client_ID', 'Client_Category', 'Client_Type', 'Product_Mix', 'Name', 'First_Name', 'Last_Name', 
-                               'SSN', 'Employer', 'Employer_NAICS', 'Title', 'Street_Address', 'Birthday', 
+                               'NAICS', 'SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday', 
                                'Start_Date', 'End_Date', 'Is_Current', 'Wealth'])
     df['Client_Category'] = df['Client_Type'].map({'Person': 'Person'}).fillna('Organization')
     df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0)
@@ -317,10 +323,12 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     
     # prep frequencies for assigning bankers to accounts (given original branch headcounts)
     l_bankers = dict()
-    for i in bankers_df.Banker_Type.unique(): l_bankers[i] = bankers_df.query(f'Banker_Type == "{i}"')['Banker_ID']
+    for i in bankers_df.Banker_Type.unique(): 
+        l_bankers[i] = bankers_df.query(f'Banker_Type == "{i}"')['Banker_ID']
     n_bankers = bankers_df[['Banker_Type', 'Banker_ID']].groupby(['Banker_Type']).count().to_dict()['Banker_ID']
     f_bankers = dict()
-    for i in n_bankers: f_bankers[i] = n_bankers[i]*[1 / n_bankers[i]]
+    for i in n_bankers: 
+        f_bankers[i] = n_bankers[i]*[1 / n_bankers[i]]
 
     # prep accounts data frame
     accounts_df = pd.DataFrame()
