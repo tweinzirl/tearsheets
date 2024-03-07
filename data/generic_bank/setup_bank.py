@@ -99,7 +99,7 @@ def assign_personnel_to_branches(df):
     banker_df.Banker_ID = range(1,banker_df.shape[0]+1,1)
     # login
     banker_df['Login'] = banker_df['Banker_Name'].str.split(" ", n=1).str[0].str[0].str.lower() + \
-                              banker_df['Banker_Name'].str.split(" ", n=1).str[1].str.lower()
+                              banker_df['Banker_Name'].str.split(" ", n=1).str[1].str.lower().replace(" ", "")
 
     return df, banker_df
 
@@ -187,8 +187,8 @@ def clients(n):
                                 client_naics, ssn, employer, client_title, address, client_region, birthday, 
                                 client_start_date, client_end_date, is_current, wealth_tier]).T, 
                       columns=['Client_ID', 'Client_Category', 'Client_Type', 'Product_Mix', 'Name', 'First_Name', 'Last_Name', 
-                               'NAICS', 'SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday', 
-                               'Start_Date', 'End_Date', 'Is_Current', 'Wealth'])
+                               'NAICS_CD', 'SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday', 
+                               'Start_Date', 'End_Date', 'Is_Current', 'Wealth_Tier'])
     df['Client_Category'] = df['Client_Type'].map({'Person': 'Person'}).fillna('Organization')
     df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0)
 
@@ -219,7 +219,10 @@ def households(df):
             if index > client_df.shape[0]:  # end of client list
                 break
 
-            next_id = households.Household_ID.max() + 1  # next Household_ID
+            if len(households) == 0:
+                next_id = 1  # case when p_nonprofit = 0
+            else:
+                next_id = households.Household_ID.max() + 1  # next Household_ID
             
             next_hh = client_df.iloc[index:index+rv]
             next_hh = next_hh.assign(Household_ID = next_id)  # apply Household_ID
@@ -302,11 +305,11 @@ def account_types():
     '''
     # TODO create this table from config dict instead
     data_dict = {'Account_Category': 3*['Deposits'] + 5*['Loans'] + 2*['Wealth'],
-                 'Account_Type': ['CHK', 'SV', 'CD'] + ['SFR', 'PLOC', 'PLN', 'CRE', 'BLOC'] + ['FRIM', 'BKG'],
+                 'Account_Type': ['CHK', 'SV', 'CD'] + ['SFR', 'PLOC', 'PLN', 'CRE', 'COMM'] + ['PM', 'BKG'],
                  'Account_Description': ['Checking', 'Savings', 'Certificate of Deposit'] +
                                         ['Consumer Mortgage', 'Consumer Line of Credit', 'Consumer Loan',
-                                         'Commercial Mortgage', 'Business Line of Credit'] +
-                                        ['FRIM', 'Brokerages']
+                                         'Commercial Mortgage', 'Commercial Loan'] +
+                                        ['Portfolio Management', 'Brokerage']
                 }
 
     acct_types_df = pd.DataFrame(data_dict)
@@ -334,7 +337,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     accounts_df = pd.DataFrame()
     for idx, row in df.iterrows():
         # for debugging
-        # if idx not in range(10): continue  
+        # if idx != 7: continue  
         # print(row)
 
         # identify number of DLW accounts per client
@@ -346,12 +349,14 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         if 'W' in row.Product_Mix: n_W+=1
         cl = row.Client_ID
         clt = row.Client_Type
+        clw = row.Wealth_Tier
         n = int(sum([n_D, n_L, n_W]))
 
         # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],
                      'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
+                     'Wealth_Tier': n*[clw],
                      'Account_Nr': np.array(range(1,n+1,1), dtype=str)
                      }
         row_df = pd.DataFrame(data_dict)
@@ -363,27 +368,20 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         acct_val = []; bal_val = []; banker_val = []; opendt_val = []; client_primary_banker_val = []
         for idx_, row_ in row_df.iterrows():
             # if row_['Account_Category'] != 'Deposits': continue  # for debugging
-            if row.Client_Type == 'Person':
-                acct_val_sel = np.random.choice(
-                    list(config.f_indiv_accts[row_['Account_Category']].keys()), 
-                    size=1, p=list(config.f_indiv_accts[row_['Account_Category']].values()))
-                # if client has L, then force D to be CHK (this effectively modifies relative freqs defined in the config)
-                if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
-                    acct_val_sel[0] = 'CHK'
-                bal_val_sel = round(np.random.normal(loc=config.bal_indiv_accts[row_['Account_Category']][acct_val_sel[0]][0],
-                                               scale=config.bal_indiv_accts[row_['Account_Category']][acct_val_sel[0]][1], 
-                                               size=1)[0], 1)
-            else:
-                acct_val_sel = np.random.choice(
-                    list(config.f_org_accts[row_['Account_Category']].keys()), 
-                    size=1, p=list(config.f_org_accts[row_['Account_Category']].values()))
-                # if client has L, then force D to be CHK
-                # assumes config mix L always has corresponding D
-                if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
-                    acct_val_sel[0] = 'CHK'
-                bal_val_sel = round(np.random.normal(loc=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][0],
-                                               scale=config.bal_org_accts[row_['Account_Category']][acct_val_sel[0]][1], 
-                                               size=1)[0], 1)
+            # acct type
+            acct_val_sel = np.random.choice(
+                list(config.f_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']].keys()), 
+                size=1, p=list(config.f_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']].values()))
+            # if client has L, then force D to be CHK (this effectively modifies relative freqs defined in the config)
+            # assumes config mix L always has corresponding D
+            if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
+                acct_val_sel[0] = 'CHK'
+            # acct balance
+            bal_val_sel = round(np.random.normal(loc=config.bal_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']][acct_val_sel[0]][0],
+                                           scale=config.bal_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']][acct_val_sel[0]][1], 
+                                           size=1)[0], 1)
+            # TODO add guardrails for negative acct bal (if negative <-100, choose uniform between -100 and 0; if >-100 but <0, then set bal to 0); different logic for different acct types
+
             # no individual / org split for banker assignment
             # TODO for given client, choose bankers only from one region
             banker_val_sel = np.random.choice(
@@ -796,7 +794,7 @@ if __name__ == '__main__':
     # clients table - (x) add join date, (x) add 'wealth' flag (low, mid, high) tiers, (x) assign primary banker, (x) add NAICS and (x) is_Current
     #    fix birthday to be birthdate (might need to check consistency with HH)
     # accounts table - (x) add account open date (ensure CHK opened before Loan acct), 
-    #    rename pdt_types (e.g. have pdt_code and pdt_label), add int rates, 
+    #    (x) rename pdt_types (e.g. have pdt_code and pdt_label), add int rates, 
     #    get the wealth tiers working when assign balances, 
     #    assign bankers to accounts by region (i.e. client has only accounts in one region)
     # x faker data - address, first name, last name, date of birth, banker names
