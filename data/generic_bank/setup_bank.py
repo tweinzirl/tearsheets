@@ -367,7 +367,10 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # assign acct open date
         acct_val = []; bal_val = []; banker_val = []; opendt_val = []; client_primary_banker_val = []
         for idx_, row_ in row_df.iterrows():
-            # if row_['Account_Category'] != 'Deposits': continue  # for debugging
+            # if row_['Account_Category'] != 'Deposits': 
+            #     row_['Account_Category'] = 'Deposits'
+            #     continue  # for debugging
+                
             # acct type
             acct_val_sel = np.random.choice(
                 list(config.f_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']].keys()), 
@@ -380,8 +383,22 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
             bal_val_sel = round(np.random.normal(loc=config.bal_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']][acct_val_sel[0]][0],
                                            scale=config.bal_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']][acct_val_sel[0]][1], 
                                            size=1)[0], 1)
-            # TODO add guardrails for negative acct bal (if negative <-100, choose uniform between -100 and 0; if >-100 but <0, then set bal to 0); different logic for different acct types
-
+            # guardrails for negative balances (esp. useful when using large std for random sampling)
+            # TODO add guardrails for negative acct bal for LW 
+            # TODO add guardrails for min acct bal for mid/high (e.g. if < 50% avg bal for tier then draw uniform around 50% level)
+            if row_['Account_Category'] == 'Deposits':
+                if acct_val_sel == ['CHK']:
+                    if bal_val_sel < -200:
+                        bal_val_sel = round(np.random.uniform(-200, 0), 1)
+                    elif bal_val_sel > -100 and bal_val_sel < 0:
+                        bal_val_sel = 0
+                if acct_val_sel == ['SV']:
+                    if bal_val_sel < 0:
+                        bal_val_sel = 0
+                if acct_val_sel == ['CD']:
+                    if bal_val_sel < 0:
+                        bal_val_sel = 5e3
+            
             # no individual / org split for banker assignment
             # TODO for given client, choose bankers only from one region
             banker_val_sel = np.random.choice(

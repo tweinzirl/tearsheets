@@ -45,62 +45,67 @@ hh_size_distribution = 6*[1] + [2,2,3,4]
 f_business_owner_link = 0.05
 
 # account frequencies (individuals, nonfinorgs, finorgs)
-f_accts = {'Person': 
-               {'Deposits': {'low': {'CHK': 0.60, 'SV': .15, 'CD': .25},
-                             'mid': {'CHK': 0.60, 'SV': .15, 'CD': .25},
-                             'high': {'CHK': 0.60, 'SV': .15, 'CD': .25}
+f_accts = {'Person':  ## individuals
+               {'Deposits': {'low': {'CHK': 0.65, 'SV': .25, 'CD': .10},
+                             'mid': {'CHK': 0.60, 'SV': .20, 'CD': .20},
+                             'high': {'CHK': 0.55, 'SV': .15, 'CD': .30}
                              }, 
-                'Loans':    {'low': {'SFR': 0.75, 'PLOC': 0.15, 'PLN': 0.05, 'CRE': 0.05, 'COMM': 0},
-                             'mid': {'SFR': 0.75, 'PLOC': 0.15, 'PLN': 0.05, 'CRE': 0.05, 'COMM': 0},
-                             'high': {'SFR': 0.75, 'PLOC': 0.15, 'PLN': 0.05, 'CRE': 0.05, 'COMM': 0}
+                'Loans':    {'low': {'SFR': 0.40, 'PLOC': 0.50, 'PLN': 0.10, 'CRE': 0, 'COMM': 0},
+                             'mid': {'SFR': 0.60, 'PLOC': 0.30, 'PLN': 0.10, 'CRE': 0, 'COMM': 0},
+                             'high': {'SFR': 0.80, 'PLOC': 0.15, 'PLN': 0.05, 'CRE': 0, 'COMM': 0}
                              },
-                'Wealth':   {'low': {'PM': 0.70, 'BKG': 0.30},
-                             'mid': {'PM': 0.70, 'BKG': 0.30},
+                'Wealth':   {'low': {'PM': 0.60, 'BKG': 0.40},
+                             'mid': {'PM': 0.65, 'BKG': 0.35},
                              'high': {'PM': 0.70, 'BKG': 0.30}
                              }
                 },
-           'Business - Other': 
-               {'Deposits': {'low': {'CHK': 0.70, 'SV': .20, 'CD': .10},
+           'Business - Other':  ## nonfinorgs
+               {'Deposits': {'low': {'CHK': 0.75, 'SV': .20, 'CD': .05},
                              'mid': {'CHK': 0.70, 'SV': .20, 'CD': .10},
-                             'high': {'CHK': 0.70, 'SV': .20, 'CD': .10}
-                             }, 
-                'Loans':    {'low': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'COMM': 0.05},
-                             'mid': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'COMM': 0.05},
-                             'high': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'COMM': 0.05}
+                             'high': {'CHK': 0.65, 'SV': .20, 'CD': .15}
                              },
-                'Wealth':   {'low': {'PM': 0.70, 'BKG': 0.30},
+                'Loans':    {'low': {'SFR': 0.35, 'PLOC': 0, 'PLN': 0, 'CRE': 0.30, 'COMM': 0.35},
+                             'mid': {'SFR': 0.25, 'PLOC': 0, 'PLN': 0, 'CRE': 0.50, 'COMM': 0.25},
+                             'high': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.70, 'COMM': 0.15}
+                             },
+                'Wealth':   {'low': {'PM': 0.65, 'BKG': 0.35},
                              'mid': {'PM': 0.70, 'BKG': 0.30},
-                             'high': {'PM': 0.70, 'BKG': 0.30}
+                             'high': {'PM': 0.75, 'BKG': 0.25}
                              }
                 },
-           'Business - Finance': 
-               {'Deposits': {'low': {'CHK': 0.70, 'SV': .20, 'CD': .10},
+           'Business - Finance':  ## finorgs 
+               {'Deposits': {'low': {'CHK': 0.75, 'SV': .20, 'CD': .05},
                              'mid': {'CHK': 0.70, 'SV': .20, 'CD': .10},
-                             'high': {'CHK': 0.70, 'SV': .20, 'CD': .10}
+                             'high': {'CHK': 0.65, 'SV': .20, 'CD': .15}
                              }, 
-                'Loans':    {'low': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'COMM': 0.05},
-                             'mid': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'COMM': 0.05},
-                             'high': {'SFR': 0.15, 'PLOC': 0, 'PLN': 0, 'CRE': 0.80, 'COMM': 0.05}
+                'Loans':    {'low': {'SFR': 0.10, 'PLOC': 0, 'PLN': 0, 'CRE': 0.15, 'COMM': 0.75},
+                             'mid': {'SFR': 0.10, 'PLOC': 0, 'PLN': 0, 'CRE': 0.20, 'COMM': 0.70},
+                             'high': {'SFR': 0.10, 'PLOC': 0, 'PLN': 0, 'CRE': 0.25, 'COMM': 0.65}
                              },
-                'Wealth':   {'low': {'PM': 0.70, 'BKG': 0.30},
+                'Wealth':   {'low': {'PM': 0.65, 'BKG': 0.35},
                              'mid': {'PM': 0.70, 'BKG': 0.30},
-                             'high': {'PM': 0.70, 'BKG': 0.30}
+                             'high': {'PM': 0.75, 'BKG': 0.25}
                              }
                 }
             }
-# TODO use a loop for the asserts
-# TODO add check that all acct dicts have the same structure (use .keys() and loop over dict)
-assert round(sum(f_accts['Person']['Deposits']['mid'].values()), 1) == 1
-assert round(sum(f_accts['Person']['Loans']['mid'].values()), 1) == 1
-assert round(sum(f_accts['Person']['Wealth']['mid'].values()), 1) == 1
+# check proportions add up to 1 and products are consistent for each segment
+# TODO add checks for str at each level of list
+for cl in f_accts: 
+    for ln in f_accts[cl]: 
+        for tr in f_accts[cl][ln]:
+            assert round(sum(f_accts[cl][ln][tr].values()), 2) ==  1
+            assert list(f_accts[cl]['Deposits'][tr].keys()) == ['CHK', 'SV', 'CD'], f_accts[cl]['Deposits'][tr].keys()
+            assert list(f_accts[cl]['Loans'][tr].keys()) == ['SFR', 'PLOC', 'PLN', 'CRE', 'COMM'], f_accts[cl]['Loans'][tr].keys()
+            assert list(f_accts[cl]['Wealth'][tr].keys()) == ['PM', 'BKG'], f_accts[cl]['Wealth'][tr].keys()
 
-# account balances in $ (for each acct type: [avg, std] pairs for use with gaussian dist)
-# TODO def avg bal assumptions by wealth tiers (high, mid, low) (e.g. <100K in dep, >100K and < 1M, >1M ; or alt use percentiles e.g. 50%, 90%)
+# account balances in $, by wealth tiers (low, mid, high)
+# for each acct type: [avg, std] pairs for use with gaussian dist
 bal_accts = {'Person': 
-               {'Deposits': {'low': {'CHK': [100e3, 100e3/4], 'SV': [200e3, 200e3/4], 'CD': [300e3, 300e3/4]},
-                             'mid': {'CHK': [100e3, 100e3/4], 'SV': [200e3, 200e3/4], 'CD': [300e3, 300e3/4]},
-                             'high': {'CHK': [100e3, 100e3/4], 'SV': [200e3, 200e3/4], 'CD': [300e3, 300e3/4]}
+               {'Deposits': {'low': {'CHK': [10e3, 10e3], 'SV': [5e3, 5e3], 'CD': [15e3, 15e3]},
+                             'mid': {'CHK': [100e3, 75e3], 'SV': [125e3, 100e3], 'CD': [150e3, 125e3]},
+                             'high': {'CHK': [1500e3, 1000e3], 'SV': [2000e3, 1500e3], 'CD': [3000e3, 2000e3]}
                              }, 
+                ## TODO finish bals for LW
                 'Loans':    {'low': {'SFR': [1500e3, 1500e3/4], 'PLOC': [500e3, 500e3/4], 'PLN': [300e3, 300e3/4], 'CRE': [2000e3, 2000e3/4], 'COMM': [0, 0/4]},
                              'mid': {'SFR': [1500e3, 1500e3/4], 'PLOC': [500e3, 500e3/4], 'PLN': [300e3, 300e3/4], 'CRE': [2000e3, 2000e3/4], 'COMM': [0, 0/4]},
                              'high': {'SFR': [1500e3, 1500e3/4], 'PLOC': [500e3, 500e3/4], 'PLN': [300e3, 300e3/4], 'CRE': [2000e3, 2000e3/4], 'COMM': [0, 0/4]}
@@ -111,9 +116,9 @@ bal_accts = {'Person':
                              }
                 },
            'Business - Other': 
-               {'Deposits': {'low': {'CHK': [500e3, 500e3/4], 'SV': [2000e3, 2000e3/4], 'CD': [3000e3, 3000e3/4]},
-                             'mid': {'CHK': [500e3, 500e3/4], 'SV': [2000e3, 2000e3/4], 'CD': [3000e3, 3000e3/4]},
-                             'high': {'CHK': [500e3, 500e3/4], 'SV': [2000e3, 2000e3/4], 'CD': [3000e3, 3000e3/4]}
+               {'Deposits': {'low': {'CHK': [20e3, 40e3], 'SV': [25e3, 50e3], 'CD': [30e3, 30e3]},
+                             'mid': {'CHK': [250e3, 500e3], 'SV': [300e3, 600e3], 'CD': [250e3, 500e3]},
+                             'high': {'CHK': [5000e3, 10000e3], 'SV': [10000e3, 20000e3], 'CD': [2500e3, 5000e3]}
                              }, 
                 'Loans':    {'low': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
                              'mid': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
@@ -125,9 +130,9 @@ bal_accts = {'Person':
                              }
                 },
            'Business - Finance': 
-               {'Deposits': {'low': {'CHK': [500e3, 500e3/4], 'SV': [2000e3, 2000e3/4], 'CD': [3000e3, 3000e3/4]},
-                             'mid': {'CHK': [500e3, 500e3/4], 'SV': [2000e3, 2000e3/4], 'CD': [3000e3, 3000e3/4]},
-                             'high': {'CHK': [500e3, 500e3/4], 'SV': [2000e3, 2000e3/4], 'CD': [3000e3, 3000e3/4]}
+               {'Deposits': {'low': {'CHK': [30e3, 60e3], 'SV': [30e3, 60e3], 'CD': [40e3, 80e3]},
+                             'mid': {'CHK': [500e3, 1000e3], 'SV': [600e3, 1200e3], 'CD': [400e3, 400e3]},
+                             'high': {'CHK': [10000e3, 20000e3], 'SV': [20000e3, 40000e3], 'CD': [7500e3, 15000e3]}
                              }, 
                 'Loans':    {'low': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
                              'mid': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
@@ -139,6 +144,14 @@ bal_accts = {'Person':
                              }
                 }
           }
+# check products are consistent for each segment
+for cl in bal_accts: 
+    for ln in bal_accts[cl]: 
+        for tr in bal_accts[cl][ln]:
+            # assert round(sum(bal_accts[cl][ln][tr].values()), 2) ==  1
+            assert list(bal_accts[cl]['Deposits'][tr].keys()) == ['CHK', 'SV', 'CD'], bal_accts[cl]['Deposits'][tr].keys()
+            assert list(bal_accts[cl]['Loans'][tr].keys()) == ['SFR', 'PLOC', 'PLN', 'CRE', 'COMM'], bal_accts[cl]['Loans'][tr].keys()
+            assert list(bal_accts[cl]['Wealth'][tr].keys()) == ['PM', 'BKG'], bal_accts[cl]['Wealth'][tr].keys()
 
 # transactions
 payment_day = 15  # date of direct deposits and loan_payments
