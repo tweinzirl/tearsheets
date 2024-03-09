@@ -45,7 +45,7 @@ hh_size_distribution = 6*[1] + [2,2,3,4]
 f_business_owner_link = 0.05
 
 # account frequencies (individuals, nonfinorgs, finorgs)
-f_accts = {'Person':  ## individuals
+f_accts = {'Person':  ## Individual
                {'Deposits': {'low': {'CHK': 0.65, 'SV': .25, 'CD': .10},
                              'mid': {'CHK': 0.60, 'SV': .20, 'CD': .20},
                              'high': {'CHK': 0.55, 'SV': .15, 'CD': .30}
@@ -59,7 +59,7 @@ f_accts = {'Person':  ## individuals
                              'high': {'PM': 0.70, 'BKG': 0.30}
                              }
                 },
-           'Business - Other':  ## nonfinorgs
+           'Business - Other':  ## NonFinOrg
                {'Deposits': {'low': {'CHK': 0.75, 'SV': .20, 'CD': .05},
                              'mid': {'CHK': 0.70, 'SV': .20, 'CD': .10},
                              'high': {'CHK': 0.65, 'SV': .20, 'CD': .15}
@@ -73,7 +73,7 @@ f_accts = {'Person':  ## individuals
                              'high': {'PM': 0.75, 'BKG': 0.25}
                              }
                 },
-           'Business - Finance':  ## finorgs 
+           'Business - Finance':  ## FinOrg 
                {'Deposits': {'low': {'CHK': 0.75, 'SV': .20, 'CD': .05},
                              'mid': {'CHK': 0.70, 'SV': .20, 'CD': .10},
                              'high': {'CHK': 0.65, 'SV': .20, 'CD': .15}
@@ -100,47 +100,46 @@ for cl in f_accts:
 
 # account balances in $, by wealth tiers (low, mid, high)
 # for each acct type: [avg, std] pairs for use with gaussian dist
-bal_accts = {'Person': 
+bal_accts = {'Person':  ## Individual
                {'Deposits': {'low': {'CHK': [10e3, 10e3], 'SV': [5e3, 5e3], 'CD': [15e3, 15e3]},
                              'mid': {'CHK': [100e3, 75e3], 'SV': [125e3, 100e3], 'CD': [150e3, 125e3]},
-                             'high': {'CHK': [1500e3, 1000e3], 'SV': [2000e3, 1500e3], 'CD': [3000e3, 2000e3]}
+                             'high': {'CHK': [1.5e6, 1e6], 'SV': [2e6, 1.5e6], 'CD': [3e6, 2e6]}
                              }, 
-                ## TODO finish bals for LW
-                'Loans':    {'low': {'SFR': [1500e3, 1500e3/4], 'PLOC': [500e3, 500e3/4], 'PLN': [300e3, 300e3/4], 'CRE': [2000e3, 2000e3/4], 'COMM': [0, 0/4]},
-                             'mid': {'SFR': [1500e3, 1500e3/4], 'PLOC': [500e3, 500e3/4], 'PLN': [300e3, 300e3/4], 'CRE': [2000e3, 2000e3/4], 'COMM': [0, 0/4]},
-                             'high': {'SFR': [1500e3, 1500e3/4], 'PLOC': [500e3, 500e3/4], 'PLN': [300e3, 300e3/4], 'CRE': [2000e3, 2000e3/4], 'COMM': [0, 0/4]}
+                'Loans':    {'low': {'SFR': [700e3, 350e3], 'PLOC': [100e3, 100e3], 'PLN': [150e3, 150e3], 'CRE': [0, 0], 'COMM': [0, 0]},
+                             'mid': {'SFR': [1.5e6, 750e3], 'PLOC': [500e3, 500e3], 'PLN': [750e3, 750e3], 'CRE': [0, 0], 'COMM': [0, 0]},
+                             'high': {'SFR': [5e6, 2.5e6], 'PLOC': [4e6, 4e6], 'PLN': [6e6, 6e6], 'CRE': [0, 0], 'COMM': [0, 0]}
                              },
-                'Wealth':   {'low': {'PM': [2000e3, 2000e3/4], 'BKG': [1000e3, 1000e3/4]},
-                             'mid': {'PM': [2000e3, 2000e3/4], 'BKG': [1000e3, 1000e3/4]},
-                             'high': {'PM': [2000e3, 2000e3/4], 'BKG': [1000e3, 1000e3/4]}
+                'Wealth':   {'low': {'PM': [100e3, 100e3], 'BKG': [100e3, 100e3]},
+                             'mid': {'PM': [500e3, 500e3], 'BKG': [500e3, 500e3]},
+                             'high': {'PM': [5e6, 20e6], 'BKG': [5e6, 20e6]}
                              }
                 },
-           'Business - Other': 
+           'Business - Other':  ## NonFinOrg 
                {'Deposits': {'low': {'CHK': [20e3, 40e3], 'SV': [25e3, 50e3], 'CD': [30e3, 30e3]},
                              'mid': {'CHK': [250e3, 500e3], 'SV': [300e3, 600e3], 'CD': [250e3, 500e3]},
-                             'high': {'CHK': [5000e3, 10000e3], 'SV': [10000e3, 20000e3], 'CD': [2500e3, 5000e3]}
+                             'high': {'CHK': [5e6, 10e6], 'SV': [10e6, 20e6], 'CD': [2.5e6, 5e6]}
                              }, 
-                'Loans':    {'low': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
-                             'mid': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
-                             'high': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]}
+                'Loans':    {'low': {'SFR': [700e3, 350e3], 'PLOC': [0, 0], 'PLN': [0, 0], 'CRE': [1e6, 500e3], 'COMM': [500e3, 500e3]},
+                             'mid': {'SFR': [2.5e6, 2e6], 'PLOC': [0, 0], 'PLN': [0, 0], 'CRE': [3e6, 1.5e6], 'COMM': [3e6, 3e6]},
+                             'high': {'SFR': [15e6, 7.5e6], 'PLOC': [0, 0], 'PLN': [0, 0], 'CRE': [20e6, 10e6], 'COMM': [15e6, 15e6]}
                              },
-                'Wealth':   {'low': {'PM': [3000e3, 3000e3/4], 'BKG': [4000e3, 4000e3/4]},
-                             'mid': {'PM': [3000e3, 3000e3/4], 'BKG': [4000e3, 4000e3/4]},
-                             'high': {'PM': [3000e3, 3000e3/4], 'BKG': [4000e3, 4000e3/4]}
+                'Wealth':   {'low': {'PM': [500e3, 500e3], 'BKG': [250e3, 250e3]},
+                             'mid': {'PM': [2e6, 2e6], 'BKG': [1.5e6, 1.5e6]},
+                             'high': {'PM': [20e6, 40e6], 'BKG': [15e6, 30e6]}
                              }
                 },
-           'Business - Finance': 
+           'Business - Finance':  ## FinOrg 
                {'Deposits': {'low': {'CHK': [30e3, 60e3], 'SV': [30e3, 60e3], 'CD': [40e3, 80e3]},
-                             'mid': {'CHK': [500e3, 1000e3], 'SV': [600e3, 1200e3], 'CD': [400e3, 400e3]},
-                             'high': {'CHK': [10000e3, 20000e3], 'SV': [20000e3, 40000e3], 'CD': [7500e3, 15000e3]}
+                             'mid': {'CHK': [500e3, 1e6], 'SV': [600e3, 1.2e6], 'CD': [400e3, 400e3]},
+                             'high': {'CHK': [10e6, 20e6], 'SV': [20e6, 40e6], 'CD': [7.5e6, 15e6]}
                              }, 
-                'Loans':    {'low': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
-                             'mid': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]},
-                             'high': {'SFR': [1500e3, 1500e3/4], 'PLOC': [0, 0/4], 'PLN': [0, 0/4], 'CRE': [5000e3, 5000e3/4], 'COMM': [1000e3, 1000e3/4]}
+                'Loans':    {'low': {'SFR': [700e3, 350e3], 'PLOC': [0, 0], 'PLN': [0, 0], 'CRE': [1e6, 500e3], 'COMM': [500e3, 500e3]},
+                             'mid': {'SFR': [2.5e6, 2e6], 'PLOC': [0, 0], 'PLN': [0, 0], 'CRE': [3e6, 1.5e6], 'COMM': [5e6, 5e6]},
+                             'high': {'SFR': [15e6, 7.5e6], 'PLOC': [0, 0], 'PLN': [0, 0], 'CRE': [15e6, 7.5e6], 'COMM': [20e6, 20e6]}
                              },
-                'Wealth':   {'low': {'PM': [3000e3, 3000e3/4], 'BKG': [4000e3, 4000e3/4]},
-                             'mid': {'PM': [3000e3, 3000e3/4], 'BKG': [4000e3, 4000e3/4]},
-                             'high': {'PM': [3000e3, 3000e3/4], 'BKG': [4000e3, 4000e3/4]}
+                'Wealth':   {'low': {'PM': [500e3, 500e3], 'BKG': [250e3, 250e3]},
+                             'mid': {'PM': [2.5e6, 5e6], 'BKG': [2e6, 4e6]},
+                             'high': {'PM': [25e6, 50e6], 'BKG': [20e6, 40e6]}
                              }
                 }
           }
