@@ -152,6 +152,10 @@ for cl in bal_accts:
             assert list(bal_accts[cl]['Loans'][tr].keys()) == ['SFR', 'PLOC', 'PLN', 'CRE', 'COMM'], bal_accts[cl]['Loans'][tr].keys()
             assert list(bal_accts[cl]['Wealth'][tr].keys()) == ['PM', 'BKG'], bal_accts[cl]['Wealth'][tr].keys()
 
+# guardrails for negative acct balances and min acct balances
+# TODO move params to config
+
+
 # transactions
 payment_day = 15  # date of direct deposits and loan_payments
 tran_min_date, tran_max_date = datetime.datetime(2023,10,1), datetime.datetime(2023,12,31)

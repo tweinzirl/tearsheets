@@ -337,7 +337,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     accounts_df = pd.DataFrame()
     for idx, row in df.iterrows():
         # for debugging
-        # if idx != 7: continue  
+        # if idx != 1227: continue  
         # print(row)
 
         # identify number of DLW accounts per client
@@ -367,8 +367,8 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # assign acct open date
         acct_val = []; bal_val = []; banker_val = []; opendt_val = []; client_primary_banker_val = []
         for idx_, row_ in row_df.iterrows():
-            # if row_['Account_Category'] != 'Deposits': 
-            #     row_['Account_Category'] = 'Deposits'
+            # if row_['Wealth_Tier'] != 'mid': 
+            #     row_['Wealth_Tier'] = 'mid'
             #     continue  # for debugging
                 
             # acct type
@@ -379,21 +379,52 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
             # assumes config mix L always has corresponding D
             if row_['Account_Category'] == 'Deposits' and n_L == 1 and acct_val_sel[0] != 'CHK': 
                 acct_val_sel[0] = 'CHK'
+            
             # acct balance
             bal_val_sel = round(np.random.normal(loc=config.bal_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']][acct_val_sel[0]][0],
                                            scale=config.bal_accts[row_['Client_Type']][row_['Account_Category']][row_['Wealth_Tier']][acct_val_sel[0]][1], 
                                            size=1)[0], 1)
-            # guardrails for negative balances and min acct balances (esp. useful when using large std for random sampling)
-            # TODO add guardrails for negative acct bal for LW 
-            # TODO add guardrails for min acct bal for mid/high (e.g. if < 50% avg bal for tier then draw uniform around 50% level)
+            
+            # guardrails for negative acct balances and min acct balances by pdt type (i.e. left truncate observed distributions)
+            # TODO move params to config
             if row_['Account_Category'] == 'Deposits':
                 if acct_val_sel == ['CHK']:
                     if bal_val_sel < -200: bal_val_sel = round(np.random.uniform(-200, 0), 1)
-                    elif bal_val_sel > -100 and bal_val_sel < 0: bal_val_sel = 0
+                    elif bal_val_sel >= -200 and bal_val_sel < 0: bal_val_sel = 0
                 if acct_val_sel == ['SV']:
                     if bal_val_sel < 0: bal_val_sel = 0
                 if acct_val_sel == ['CD']:
-                    if bal_val_sel < 0: bal_val_sel = 5e3
+                    if bal_val_sel < 0: bal_val_sel = 10e3
+            elif row_['Account_Category'] == 'Loans':
+                if acct_val_sel == ['SFR']:
+                    if bal_val_sel < 250e3: bal_val_sel = round(np.random.uniform(250e3, 300e3), 1)
+                if acct_val_sel == ['PLOC']:
+                    if bal_val_sel < 0: bal_val_sel = 0
+                if acct_val_sel == ['PLN']:
+                    if bal_val_sel < 10e3: bal_val_sel = round(np.random.uniform(10e3, 30e3), 1)
+                if acct_val_sel == ['CRE']:
+                    if bal_val_sel < 500e3: bal_val_sel = round(np.random.uniform(500e3, 600e3), 1)
+                if acct_val_sel == ['COMM']:
+                    if bal_val_sel < 250e3: bal_val_sel = round(np.random.uniform(250e3, 300e3), 1)
+            elif row_['Account_Category'] == 'Wealth':
+                if acct_val_sel == ['PM']:
+                    if bal_val_sel < 50e3: bal_val_sel = round(np.random.uniform(50e3, 75e3), 1)
+                if acct_val_sel == ['BKG']:
+                    if bal_val_sel < 50e3: bal_val_sel = round(np.random.uniform(50e3, 75e3), 1)
+                        
+            # guardrails for min bal for mid/high tiers (left truncate observed distributions, to avoid large overlaps with prev tiers)
+            # if bal < avg + 2sd of prev tier, then set to uniform between avg + 2sd and avg + 4sd of prev tier
+            prev_tiers = {'mid': 'low', 
+                          'high': 'mid'}
+            if row_['Wealth_Tier'] in ['mid', 'high']:
+                prev_tier_bal_2sd_4sd = []
+                for i in [2,4]:
+                    # get prev tier avg +2sd and +4sd (if current is 'mid', get avg of 'low' tier; if current is 'high', get avg of 'mid' tier)
+                    x = (config.bal_accts[row_['Client_Type']][row_['Account_Category']][prev_tiers[row_['Wealth_Tier']]][acct_val_sel[0]][0] + 
+                         i * config.bal_accts[row_['Client_Type']][row_['Account_Category']][prev_tiers[row_['Wealth_Tier']]][acct_val_sel[0]][1])
+                    prev_tier_bal_2sd_4sd.append(x)
+                if bal_val_sel < prev_tier_bal_2sd_4sd[0]:
+                    bal_val_sel = round(np.random.uniform(prev_tier_bal_2sd_4sd[0], prev_tier_bal_2sd_4sd[1]), 1)
             
             # no individual / org split for banker assignment
             # TODO for given client, choose bankers only from one region
@@ -410,7 +441,6 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
             else: 
                 client_primary_banker_val_sel = False
             # acct open date (assumes D is first in list)
-            # TODO if idx = 0 and CHK, then use join date; other accounts use date between open date and 2 years from open date
             if idx_ == 0 and row_['Account_Category'] == 'Deposits': 
                 ## if client has D, then client opened D acct on join date
                 opendt_val_sel = row['Start_Date']
