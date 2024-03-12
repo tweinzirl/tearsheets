@@ -169,7 +169,7 @@ def load_persona_html():
     urls = glob.glob('data/text/*html')
     docs = []
     for url in urls:
-        doc = UnstructuredHTMLLoader(url).load()
+        doc = UnstructuredHTMLLoader(url, encoding='ISO-8859-1').load()
         # infer client name and add to metadata
         root = url.split('/')[-1]
         toks = root.split('_')
