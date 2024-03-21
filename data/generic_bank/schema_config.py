@@ -20,7 +20,6 @@ config = {
                 "Is_Current": "Is_Current",
                 "Wealth_Tier": "Wealth_Tier", 
             },
-            "primary_key" : {"ID"},
-            "foreign_keys": {},
+            "primary_key" : "ID",
         },
     }
