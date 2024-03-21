@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+from schema_config import config
 
 try:
     from dbio import connectors
@@ -25,23 +25,35 @@ def pandas_type_to_sql_type(pandas_type):
         return "varchar(128)"  # Default fallback
 
 
-def generate_sql_create_command(df, column_mapping, primary_key, foreign_keys):
+def generate_sql_create_command(df, table_name, schema_config):
     """
     Generate SQL CREATE TABLE command with primary and foreign key constraints.
     
     :param df: Pandas DataFrame representing the table structure.
-    :param column_mapping: Dictionary mapping DataFrame columns to database column names.
-    :param primary_key: The column name of the primary key.
-    :param foreign_keys: List of dictionaries representing foreign key constraints.
+    :param table_name: Table name in the database
+    :param schema_config: 
+        Dictionary contains table name, column_mapping, primary key, and foreign_keys
+        column_mapping: Dictionary mapping DataFrame columns to database column names.
+        primary_key: The column name of the primary key.
+        foreign_keys: List of dictionaries representing foreign key constraints.
     :return: SQL CREATE TABLE command as a string.
     """
+
+    column_mapping = schema_config[table_name].get('column_mapping', None)
+    primary_key = schema_config[table_name].get('primary_key', None)
+    foreign_keys = schema_config[table_name].get('foreign_keys', None)
+
     # Start the SQL command
     sql_command = "CREATE TABLE client (\n"
     
     # Add columns with types inferred from the DataFrame
-    for column, mapped_column in column_mapping.items():
+    for column in df.columns:
         pandas_type = df[column].dtype
-        sql_type = pandas_type_to_sql_type(pandas_type)  # Assumes pandas_type_to_sql_type function is defined
+        sql_type = pandas_type_to_sql_type(pandas_type)
+        mapped_column = column
+        if isinstance(column_mapping, 'dict'):
+            mapped_column = column_mapping.get(column, column)
+            
         sql_command += f"    {mapped_column} {sql_type},\n"
     
     # Add primary key constraint
@@ -49,8 +61,9 @@ def generate_sql_create_command(df, column_mapping, primary_key, foreign_keys):
         sql_command += f"    PRIMARY KEY ({primary_key}),\n"
     
     # Add foreign key constraints
-    for fk in foreign_keys:
-        sql_command += f"    FOREIGN KEY ({fk['column']}) REFERENCES {fk['references_table']}({fk['references_column']}),\n"
+    if isinstance(foreign_keys, list):
+        for fk in foreign_keys:
+            sql_command += f"    FOREIGN KEY ({fk['column']}) REFERENCES {fk['references_table']}({fk['references_column']}),\n"
     
     # Remove the last comma and newline
     sql_command = sql_command.rstrip(',\n')
@@ -70,28 +83,6 @@ if __name__ == "__main__":
     table_name = "clients"
     schema_config = {table_name : "clients"}
     df =cobj.read(f"select * from {table_name}")
-
-    column_mapping = {
-        "df_column1": "ID",
-        "df_column2": "Name",
-        # Add more mappings as necessary
-    }
-
-
-
-
-
-
-    # Example primary key and foreign keys
-    primary_key = "ID"
-    foreign_keys = [
-        {"column": "ForeignKeyColumn1", "references_table": "OtherTable1", "references_column": "ID"},
-        {"column": "ForeignKeyColumn2", "references_table": "OtherTable2", "references_column": "ID"},
-        # Add more foreign key constraints as necessary
-    ]
-
-    sql_command = generate_sql_create_command(df, column_mapping, primary_key, foreign_keys)
-    print(sql_command)
 
     # client_mapping
     # sm.generate_sql_create_command(df)
