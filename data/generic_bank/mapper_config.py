@@ -1,0 +1,26 @@
+schema_config = {
+        "clients": {
+            "column_mapping": {
+                "Client_ID": "ID",
+                "Client_Category": "Person_Org",
+                "Client_Type": "Type",
+                "Product_Mix": "Product_Mix",
+                "Name": "Name" ,
+                "First_Name": "First_Name", 
+                "Last_Name": "Last_Name", 
+                "NAICS_CD": "NAICS_CD", 
+                "SSN": "SSN", 
+                "Employer": "Employer", 
+                "Title": "Title", 
+                "Street_Address": "Address",
+                "Region": "Region", 
+                "Birthday": "Birthday", 
+                "Start_Date": "Start_Dt", 
+                "End_Date": "End_Dt", 
+                "Is_Current": "Is_Current",
+                "Wealth_Tier": "Wealth_Tier", 
+            },
+            "primary_key" : {"ID"},
+            "foreign_keys": {},
+        },
+    }
