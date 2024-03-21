@@ -1,4 +1,4 @@
-schema_config = {
+config = {
         "clients": {
             "column_mapping": {
                 "Client_ID": "ID",
