@@ -6,6 +6,8 @@ try:
     from dbio import connectors
 except ImportError: print("No module named 'dbio', so can't use write_db()")
 
+db = './generic_bank.db'
+cobj = connectors.SQLite(database=db)
 
 def pandas_type_to_sql_type(pandas_type):
     """
@@ -51,7 +53,7 @@ def generate_sql_create_command(df, table_name, schema_config):
         pandas_type = df[column].dtype
         sql_type = pandas_type_to_sql_type(pandas_type)
         mapped_column = column
-        if isinstance(column_mapping, 'dict'):
+        if isinstance(column_mapping, dict):
             mapped_column = column_mapping.get(column, column)
             
         sql_command += f"    {mapped_column} {sql_type},\n"
@@ -74,18 +76,25 @@ def generate_sql_create_command(df, table_name, schema_config):
     return sql_command
 
 
+def generate_schema_from_table(cobj, table_name, schema_config):
+    """
+    Reads a table from a SQLite database and generates an SQL CREATE TABLE command
+    based on the DataFrame structure and a given schema configuration.
+
+    :param db_path: Path to the SQLite database.
+    :param table_name: Name of the table to read and generate the schema for.
+    :param schema_config: Configuration details for schema mapping.
+    :return: A string containing the SQL CREATE TABLE command.
+    """
+    df = cobj.read(f"SELECT * FROM {table_name}")
+    sql = generate_sql_create_command(df, table_name, schema_config=schema_config)
+    return sql
+
 
 if __name__ == "__main__":
 
     import schema_mapper as sm
-    db = './generic_bank.db'
-    cobj = connectors.SQLite(database=db)
     table_name = "clients"
-    schema_config = {table_name : "clients"}
-    df =cobj.read(f"select * from {table_name}")
-
-    # client_mapping
-    # sm.generate_sql_create_command(df)
-
-    print(df.head())
-    print('tested...')
+    sql = generate_schema_from_table(cobj, table_name=table_name, schema_config=config)
+    print(sql)
+    print(f"generated schema for {table_name}.")
