@@ -143,7 +143,7 @@ def clients(n):
             name[i] = fake.name()
             first_name[i] = name[i].split(" ", 1)[0]
             last_name[i] = name[i].split(" ", 1)[1]
-            client_naics[i] = np.nan
+            client_naics[i] = pd.NA
             ssn[i] = fake.ssn()
             # employer random generated for each client 
             # TODO create a list of employers and draw from that list 
@@ -152,7 +152,7 @@ def clients(n):
             # TODO create list of tiltes (esp. for high tier) and draw from those
             client_title[i] = fake.job()
             bday = fake.date_between(datetime.datetime(1945,1,1), pd.to_datetime('today').date())
-            birthday[i] = bday.strftime('%m/%d')
+            birthday[i] = bday.strftime('%Y-%m-%d')
         elif client_type[i].find('Business') != -1:
             name[i] = fake.company()
             first_name[i] = np.nan
@@ -181,7 +181,7 @@ def clients(n):
         client_start_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
 
     # initialize derived / empty fields
-    client_cat, client_end_date, is_current = n*[np.nan], n*[np.nan], n*[np.nan]
+    client_cat, client_end_date, is_current = n*[None], n*[pd.NaT], n*[pd.NA]
     # create dataframe
     df = pd.DataFrame(np.array([range(1,n+1, 1), client_cat, client_type, product_mix, name, first_name, last_name, 
                                 client_naics, ssn, employer, client_title, address, client_region, birthday, 
@@ -190,9 +190,18 @@ def clients(n):
                                'NAICS_CD', 'SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday', 
                                'Start_Date', 'End_Date', 'Is_Current', 'Wealth_Tier'])
     df['Client_Category'] = df['Client_Type'].map({'Person': 'Person'}).fillna('Organization')
-    df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0)
+    df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0).astype(int)
 
-    return df.astype({'Client_ID': int})
+    df = df.astype({
+        'Client_ID': int,
+        'NAICS_CD': 'Int64',  # Allows for integers with NaNs
+    })
+
+    #df['Start_Date'] = pd.to_datetime(df['Start_Date'], errors='coerce')
+    #df['End_Date'] = pd.to_datetime(df['End_Date'], errors='coerce') 
+    #df['Birthday'] = pd.to_datetime(df['Birthday'], errors='coerce')
+    #df['Birthday'] = df['Birthday'].dt.strftime('%Y-%m-%d').replace('NaT', None)
+    return df
 
 
 def households(df):
@@ -776,6 +785,7 @@ def write_db(df_dict, db='generic_bank.db'):
     return 'Done'
 
 
+
 if __name__ == '__main__':
     import setup_bank as m
     import config
@@ -826,7 +836,8 @@ if __name__ == '__main__':
                'account_fact': ts_df,
                 }
     result = m.write_db(df_dict)
-
+    
+    print("finished")
     # clients
     # distribution of client join dates by month
     # print(clients_df['Start_Date'].groupby(pd.to_datetime(clients_df['Start_Date']).dt.strftime('%Y-%m')).agg('count').to_string())

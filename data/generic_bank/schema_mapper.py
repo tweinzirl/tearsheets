@@ -95,6 +95,9 @@ if __name__ == "__main__":
 
     import schema_mapper as sm
     table_name = "clients"
+
+    df = cobj.read(f"SELECT * FROM {table_name}")   
+
     sql = generate_schema_from_table(cobj, table_name=table_name, schema_config=config)
     print(sql)
     print(f"generated schema for {table_name}.")
