@@ -152,7 +152,7 @@ def clients(n):
             # TODO create list of tiltes (esp. for high tier) and draw from those
             client_title[i] = fake.job()
             bday = fake.date_between(datetime.datetime(1945,1,1), pd.to_datetime('today').date())
-            birthday[i] = bday.strftime('%Y-%m-%d')
+            birthday[i] = bday.strftime('%m/%d')  # to use '%Y-%m-%d', rename to 'birthdate' and ensure consistency with HH logic
         elif client_type[i].find('Business') != -1:
             name[i] = fake.company()
             first_name[i] = np.nan
