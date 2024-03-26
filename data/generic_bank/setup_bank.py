@@ -484,6 +484,16 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     for idx_cat in accounts_df['Account_Category'].unique():
         accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
 
+    accounts_df = accounts_df.reset_index(drop=True)
+    
+    # assign a primary key 
+    len_accounts = accounts_df.shape[0]
+    accounts_df.insert(0, "ID", np.arange(1, len_accounts+1, 1))
+    
+    # normalizing the accounts table: drop columns specific to other tables
+    accounts_df = accounts_df.drop(columns=["Wealth_Tier", "Client_Type"])
+    print("done")
+
     return(accounts_df.reset_index(drop=True))
 
 
@@ -825,16 +835,19 @@ if __name__ == '__main__':
     # validate output characteristics
     # ?
 
+    # add Household ID to clients table
+    clients_df = clients_df.merge(households_df.filter(items=["Client_ID", "Household_ID"]), on="Client_ID")
+
     # write database
     df_dict = {'branches': branches_df,
                'bankers': bankers_df,
                'clients': clients_df,
-               'households': households_df,
+               #'households': households_df,
                'links': links_df,
                'accounts': accounts_df,
-               'transactions': transactions_df,
-               'account_fact': ts_df,
-                }
+               #'transactions': transactions_df,
+               #'account_fact': ts_df,
+            }
     result = m.write_db(df_dict)
     
     print("finished")
