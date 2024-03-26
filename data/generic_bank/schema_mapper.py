@@ -95,12 +95,12 @@ def generate_schema(cobj, schema_config, save=True):
     
     print(tables.head(10))
     for table_name in tables.name.to_list():
-        df = cobj.read("SELECT * FROM TABLE_NAME LIMIT 1;")
+        df = cobj.read(f"SELECT * FROM {table_name} LIMIT 1;")
         schema += generate_sql_create_command(df, table_name, schema_config=schema_config)
         schema += "\n\n"
     
     if save:
-        with open("Template_SQLite.text") as f:
+        with open("Template_SQLite.txt") as f:
             f.write(schema)
 
     return schema
