@@ -1,4 +1,4 @@
-config = {
+data_dict = {
         "clients": {
             "column_mapping": {
                 "Client_ID": "ID",

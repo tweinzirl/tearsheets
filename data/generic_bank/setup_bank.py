@@ -18,15 +18,18 @@ import pandas as pd
 import itertools
 import datetime
 import faker
+from schema_mapper import (generate_schema, mapper)
 
 import config
+from schema_config import data_dict
 
 try:
     from dbio import connectors
 except ImportError: print("No module named 'dbio', so can't use write_db()")
 
 fake = faker.Faker()
-
+db = './generic_bank.db'
+cobj = connectors.SQLite(database=db)
 
 def regions(n):
     '''Return n distinct regions and regional managers'''
@@ -839,16 +842,22 @@ if __name__ == '__main__':
     clients_df = clients_df.merge(households_df.filter(items=["Client_ID", "Household_ID"]), on="Client_ID")
 
     # write database
-    df_dict = {'branches': branches_df,
-               'bankers': bankers_df,
+    df_dict = {'accounts': accounts_df,
                'clients': clients_df,
-               #'households': households_df,
+               'bankers': bankers_df,
                'links': links_df,
-               'accounts': accounts_df,
                #'transactions': transactions_df,
                #'account_fact': ts_df,
+               #'branches': branches_df,
+               #'households': households_df,
             }
+    
+    for table_name, df in df_dict.items():
+        df_dict[table_name] = mapper(df, table_name, schema_config=data_dict)
+
     result = m.write_db(df_dict)
+
+    generate_schema(cobj=cobj, schema_config=data_dict, save=True)
     
     print("finished")
     # clients

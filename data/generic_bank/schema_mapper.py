@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from schema_config import config
+from schema_config import data_dict
 
 try:
     from dbio import connectors
@@ -40,10 +40,12 @@ def generate_sql_create_command(df, table_name, schema_config):
         foreign_keys: List of dictionaries representing foreign key constraints.
     :return: SQL CREATE TABLE command as a string.
     """
-
-    column_mapping = schema_config[table_name].get('column_mapping', None)
-    primary_key = schema_config[table_name].get('primary_key', None)
-    foreign_keys = schema_config[table_name].get('foreign_keys', None)
+    column_mapping, primary_key, foreign_keys = None, None, None
+    table_config = schema_config.get(table_name, None)
+    if table_config is not None:
+        column_mapping = table_config.get('column_mapping', None)
+        primary_key = table_config.get('primary_key', None)
+        foreign_keys = table_config.get('foreign_keys', None)
 
     # Start the SQL command
     sql_command = "CREATE TABLE client (\n"
@@ -76,7 +78,7 @@ def generate_sql_create_command(df, table_name, schema_config):
     return sql_command
 
 
-def generate_schema_from_table(cobj, table_name, schema_config):
+def generate_schema(cobj, schema_config, save=True):
     """
     Reads a table from a SQLite database and generates an SQL CREATE TABLE command
     based on the DataFrame structure and a given schema configuration.
@@ -86,9 +88,22 @@ def generate_schema_from_table(cobj, table_name, schema_config):
     :param schema_config: Configuration details for schema mapping.
     :return: A string containing the SQL CREATE TABLE command.
     """
-    df = cobj.read(f"SELECT * FROM {table_name} LIMIT 1;")
-    sql = generate_sql_create_command(df, table_name, schema_config=schema_config)
-    return sql
+    schema = ""
+    tables = cobj.read(f"SELECT name FROM sqlite_master WHERE type='table';")
+    if tables.empty:
+        raise Exception("There are no tables available in the database")
+    
+    print(tables.head(10))
+    for table_name in tables.name.to_list():
+        df = cobj.read("SELECT * FROM TABLE_NAME LIMIT 1;")
+        schema += generate_sql_create_command(df, table_name, schema_config=schema_config)
+        schema += "\n\n"
+    
+    if save:
+        with open("Template_SQLite.text") as f:
+            f.write(schema)
+
+    return schema
 
 
 def mapper(df, table_name, schema_config):
@@ -101,25 +116,20 @@ def mapper(df, table_name, schema_config):
     column_mapping = schema_config[table_name].get('column_mapping', None)
     if isinstance(column_mapping, dict):
         try:
-            df = df.rename(mapper=column_mapping)
+            print(column_mapping)
+            df = df.rename(columns=column_mapping)
         except Exception as e:
             print(e)
     return df
 
 
+# if __name__ == "__main__":
 
+#     import schema_mapper as sm
+#     table_name = "clients"
 
+#     df = cobj.read(f"SELECT * FROM {table_name}")   
 
-
-
-
-if __name__ == "__main__":
-
-    import schema_mapper as sm
-    table_name = "clients"
-
-    df = cobj.read(f"SELECT * FROM {table_name}")   
-
-    sql = generate_schema_from_table(cobj, table_name=table_name, schema_config=config)
-    print(sql)
-    print(f"generated schema for {table_name}.")
+#     sql = generate_schema_from_table(cobj, table_name=table_name, schema_config=config)
+#     print(sql)
+#     print(f"generated schema for {table_name}.")
