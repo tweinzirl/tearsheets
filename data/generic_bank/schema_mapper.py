@@ -86,9 +86,31 @@ def generate_schema_from_table(cobj, table_name, schema_config):
     :param schema_config: Configuration details for schema mapping.
     :return: A string containing the SQL CREATE TABLE command.
     """
-    df = cobj.read(f"SELECT * FROM {table_name}")
+    df = cobj.read(f"SELECT * FROM {table_name} LIMIT 1;")
     sql = generate_sql_create_command(df, table_name, schema_config=schema_config)
     return sql
+
+
+def mapper(df, table_name, schema_config):
+    """
+    Take a dataframe and map the column names and types according to the guidlines in schema_config
+    :param df: Pandas dataframe
+    :param table_name: Name of the table that corresponds to the dataframe
+    :schema_config: Configuration details for schema mapping.
+    """
+    column_mapping = schema_config[table_name].get('column_mapping', None)
+    if isinstance(column_mapping, dict):
+        try:
+            df = df.rename(mapper=column_mapping)
+        except Exception as e:
+            print(e)
+    return df
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
