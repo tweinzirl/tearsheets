@@ -857,8 +857,7 @@ if __name__ == '__main__':
 
     result = m.write_db(df_dict)
 
-    generate_schema(cobj=cobj, schema_config=data_dict, save=True)
-    
+    sql = generate_schema(cobj=cobj, schema_config=data_dict, save=True)
     print("finished")
     # clients
     # distribution of client join dates by month

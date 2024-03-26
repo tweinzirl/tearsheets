@@ -48,7 +48,7 @@ def generate_sql_create_command(df, table_name, schema_config):
         foreign_keys = table_config.get('foreign_keys', None)
 
     # Start the SQL command
-    sql_command = "CREATE TABLE client (\n"
+    sql_command = f"CREATE TABLE {table_name} (\n"
     
     # Add columns with types inferred from the DataFrame
     for column in df.columns:
@@ -100,7 +100,7 @@ def generate_schema(cobj, schema_config, save=True):
         schema += "\n\n"
     
     if save:
-        with open("Template_SQLite.txt") as f:
+        with open("Template_SQLite.txt", "w+") as f:
             f.write(schema)
 
     return schema
@@ -123,13 +123,8 @@ def mapper(df, table_name, schema_config):
     return df
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
-#     import schema_mapper as sm
-#     table_name = "clients"
-
-#     df = cobj.read(f"SELECT * FROM {table_name}")   
-
-#     sql = generate_schema_from_table(cobj, table_name=table_name, schema_config=config)
-#     print(sql)
-#     print(f"generated schema for {table_name}.")
+    import schema_mapper as sm
+    sql = generate_schema(cobj, data_dict, save=True)
+    print(sql)
