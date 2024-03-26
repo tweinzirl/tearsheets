@@ -19,8 +19,12 @@ config = {
                 "End_Date": "End_Dt", 
                 "Is_Current": "Is_Current",
                 "Wealth_Tier": "Wealth_Tier", 
+                "Household_ID": "HH_ID"
             },
             "primary_key" : "ID",
+            "foreign_keys": [
+                {"column": "HH_ID", "references_table": "links", "references_column": "Household_ID"},
+            ]
         },
         # add ID as primary key to the accounts table
         # remove client_type, wealth_tier from accounts table
@@ -46,12 +50,28 @@ config = {
         "bankers": {
             "column_mapping": {
                 "Banker_ID": "ID",
+                "Login": "Login",
                 "Banker_Name": "Name",
                 "Banker_Type" : "Type",
                 "Branch_Number": "Branch_Nbr",
-                "Login": "Login",
                 "Region" : "Region",
             },
             "primary_key" : "ID",
+            "foreign_keys": [
+                {"column": "Branch_Nbr", "references_table": "branches", "references_column": "Branch_Number"},
+            ]
+        }, 
+        "links": {
+            "column_mapping": {
+                "Link_ID": "ID",
+                "Household_ID": "Household_ID",
+                "Client_1": "Client_1",
+                "Client_2" : "Client_2",
+                "Link_Type": "Link_Type",
+            },
+            "primary_key" : "ID",
+            "foreign_keys": [
+                {"column": "Household_ID", "references_table": "clients", "references_column": "HH_ID"},
+            ]
         }, 
     }
