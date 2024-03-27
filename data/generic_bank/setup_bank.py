@@ -25,13 +25,13 @@ from schema_config import data_dict
 
 from datetime import timezone, date, timedelta
 
-try:
-    from dbio import connectors
-except ImportError: print("No module named 'dbio', so can't use write_db()")
+#try:
+#    from dbio import connectors
+#except ImportError: print("No module named 'dbio', so can't use write_db()")
 
 fake = faker.Faker()
 db = './generic_bank.db'
-cobj = connectors.SQLite(database=db)
+cobj = None #connectors.SQLite(database=db)
 
 def regions(n):
     '''Return n distinct regions and regional managers'''

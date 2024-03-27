@@ -2,12 +2,12 @@ import numpy as np
 import pandas as pd
 from schema_config import data_dict
 
-try:
-    from dbio import connectors
-except ImportError: print("No module named 'dbio', so can't use write_db()")
+#try:
+#    from dbio import connectors
+#except ImportError: print("No module named 'dbio', so can't use write_db()")
 
 db = './generic_bank.db'
-cobj = connectors.SQLite(database=db)
+cobj = None #connectors.SQLite(database=db)
 
 def pandas_type_to_sql_type(pandas_type):
     """
@@ -30,10 +30,10 @@ def pandas_type_to_sql_type(pandas_type):
 def generate_sql_create_command(df, table_name, schema_config):
     """
     Generate SQL CREATE TABLE command with primary and foreign key constraints.
-    
+
     :param df: Pandas DataFrame representing the table structure.
     :param table_name: Table name in the database
-    :param schema_config: 
+    :param schema_config:
         Dictionary contains table name, column_mapping, primary key, and foreign_keys
         column_mapping: Dictionary mapping DataFrame columns to database column names.
         primary_key: The column name of the primary key.
@@ -49,7 +49,7 @@ def generate_sql_create_command(df, table_name, schema_config):
 
     # Start the SQL command
     sql_command = f"CREATE TABLE {table_name} (\n"
-    
+
     # Add columns with types inferred from the DataFrame
     for column in df.columns:
         pandas_type = df[column].dtype
@@ -57,24 +57,24 @@ def generate_sql_create_command(df, table_name, schema_config):
         mapped_column = column
         if isinstance(column_mapping, dict):
             mapped_column = column_mapping.get(column, column)
-            
+
         sql_command += f"    {mapped_column} {sql_type},\n"
-    
+
     # Add primary key constraint
     if primary_key:
         sql_command += f"    PRIMARY KEY ({primary_key}),\n"
-    
+
     # Add foreign key constraints
     if isinstance(foreign_keys, list):
         for fk in foreign_keys:
             sql_command += f"    FOREIGN KEY ({fk['column']}) REFERENCES {fk['references_table']}({fk['references_column']}),\n"
-    
+
     # Remove the last comma and newline
     sql_command = sql_command.rstrip(',\n')
-    
+
     # Finish the SQL command
     sql_command += "\n);"
-    
+
     return sql_command
 
 
@@ -92,13 +92,13 @@ def generate_schema(cobj, schema_config, save=True):
     tables = cobj.read(f"SELECT name FROM sqlite_master WHERE type='table';")
     if tables.empty:
         raise Exception("There are no tables available in the database")
-    
+
     print(tables.head(10))
     for table_name in tables.name.to_list():
         df = cobj.read(f"SELECT * FROM {table_name} LIMIT 1;")
         schema += generate_sql_create_command(df, table_name, schema_config=schema_config)
         schema += "\n\n"
-    
+
     if save:
         with open("Template_SQLite.txt", "w+") as f:
             f.write(schema)
