@@ -328,7 +328,7 @@ def account_types():
     return acct_types_df
 
 
-def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
+def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False):
     '''
     Use clients(n) as input.
     Assigns accounts to clients based on their product mix. Returns account-level table with unique account id. Use account frequencies defined in config.py, separate for Individual / Organizations. 
@@ -367,9 +367,10 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
         # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],
-                     'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth'],
                      'Wealth_Tier': n*[clw],
-                     'Account_Nr': np.array(range(1,n+1,1), dtype=str)
+                     'Account_Nr': np.array(range(1,n+1,1), dtype=str),
+                     # TODO pull DLW labels from config
+                     'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth']
                      }
         row_df = pd.DataFrame(data_dict)
 
@@ -486,6 +487,10 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     n_acct_cat = accounts_df.groupby('Account_Category').size()
     for idx_cat in accounts_df['Account_Category'].unique():
         accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
+    # close date / is current / status
+    accounts_df = accounts_df.assign(Close_Date = pd.NaT)
+    accounts_df['Is_Current'] = np.where(pd.isna(accounts_df['Close_Date']), 1, 0).astype(int)
+    accounts_df['Status'] = np.where(pd.isna(accounts_df['Close_Date']), 'Active', 'Closed').astype(str)
 
     accounts_df = accounts_df.reset_index(drop=True)
     
@@ -494,7 +499,8 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df):
     accounts_df.insert(0, "ID", np.arange(1, len_accounts+1, 1))
     
     # normalizing the accounts table: drop columns specific to other tables
-    accounts_df = accounts_df.drop(columns=["Wealth_Tier", "Client_Type"])
+    if debug == False:
+        accounts_df = accounts_df.drop(columns=["Wealth_Tier", "Client_Type"])
     print("done")
 
     return(accounts_df.reset_index(drop=True))
