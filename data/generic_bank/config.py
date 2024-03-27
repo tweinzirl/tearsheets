@@ -1,9 +1,10 @@
 import datetime
 
-# set bank size
+# set bank size & parameters
 n_regions = 2
 n_branches = 2
 n_clients = 1e4
+founding_date = datetime.datetime(2005,1,1)  # established date
 
 # define default list of regions
 l_regions = ['West', 'East', 'North', 'South']
