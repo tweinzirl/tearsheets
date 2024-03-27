@@ -485,8 +485,10 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
 
     # unique account id per acct category (i.e. D#, L#, W#)
     n_acct_cat = accounts_df.groupby('Account_Category').size()
-    for idx_cat in accounts_df['Account_Category'].unique():
-        accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + f"{k}" for k in range(1, n_acct_cat[idx_cat]+1, 1)]
+    acct_prefix = ['6','7','8']
+    for i, idx_cat in enumerate(accounts_df['Account_Category'].unique()):
+        accounts_df.loc[accounts_df.Account_Category == idx_cat, 'Account_Nr'] = [idx_cat[0] + "00" + acct_prefix[i] + f"{k}".zfill(7) for k in range(1, n_acct_cat[idx_cat]+1, 1)]
+    
     # close date / is current / status
     accounts_df = accounts_df.assign(Close_Date = pd.NaT)
     accounts_df['Is_Current'] = np.where(pd.isna(accounts_df['Close_Date']), 1, 0).astype(int)

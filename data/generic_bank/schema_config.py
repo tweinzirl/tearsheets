@@ -39,7 +39,10 @@ data_dict = {
                 "Init_Balance": "Balance",
                 "Banker_ID": "Banker_ID",
                 "Primary_Banker": "Primary_Banker",
-                "Open_Date": "Start_Dt"
+                "Open_Date": "Start_Dt",
+                "Close_Date": "End_Dt",
+                "Is_Current": "Is_Current",
+                "Status": "Status"
             },
             "primary_key" : "ID",
             "foreign_keys": [
