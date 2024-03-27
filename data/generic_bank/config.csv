@@ -1,0 +1,73 @@
+Client_Type,Account_Category,Wealth_Tier,Account_Type,incprob,incavg,incsd,decprob,decavg,decsd
+Business - Finance,Deposits,high,CD,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,high,CHK,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,high,SV,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,low,CD,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,low,CHK,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,low,SV,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,mid,CD,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,mid,CHK,0.2,250,30,0.4,150,50
+Business - Finance,Deposits,mid,SV,0.2,250,30,0.4,150,50
+Business - Finance,Loans,high,COMM,0.2,250,30,0.4,150,50
+Business - Finance,Loans,high,CRE,0.2,250,30,0.4,150,50
+Business - Finance,Loans,high,SFR,0.2,250,30,0.4,150,50
+Business - Finance,Loans,low,COMM,0.2,250,30,0.4,150,50
+Business - Finance,Loans,low,CRE,0.2,250,30,0.4,150,50
+Business - Finance,Loans,low,SFR,0.2,250,30,0.4,150,50
+Business - Finance,Loans,mid,COMM,0.2,250,30,0.4,150,50
+Business - Finance,Loans,mid,CRE,0.2,250,30,0.4,150,50
+Business - Finance,Loans,mid,SFR,0.2,250,30,0.4,150,50
+Business - Finance,Wealth,high,BKG,0.2,250,30,0.4,150,50
+Business - Finance,Wealth,high,PM,0.2,250,30,0.4,150,50
+Business - Finance,Wealth,low,BKG,0.2,250,30,0.4,150,50
+Business - Finance,Wealth,low,PM,0.2,250,30,0.4,150,50
+Business - Finance,Wealth,mid,BKG,0.2,250,30,0.4,150,50
+Business - Finance,Wealth,mid,PM,0.2,250,30,0.4,150,50
+Business - Other,Deposits,high,CD,0.2,250,30,0.4,150,50
+Business - Other,Deposits,high,CHK,0.2,250,30,0.4,150,50
+Business - Other,Deposits,high,SV,0.2,250,30,0.4,150,50
+Business - Other,Deposits,low,CD,0.2,250,30,0.4,150,50
+Business - Other,Deposits,low,CHK,0.2,250,30,0.4,150,50
+Business - Other,Deposits,low,SV,0.2,250,30,0.4,150,50
+Business - Other,Deposits,mid,CD,0.2,250,30,0.4,150,50
+Business - Other,Deposits,mid,CHK,0.2,250,30,0.4,150,50
+Business - Other,Deposits,mid,SV,0.2,250,30,0.4,150,50
+Business - Other,Loans,high,COMM,0.2,250,30,0.4,150,50
+Business - Other,Loans,high,CRE,0.2,250,30,0.4,150,50
+Business - Other,Loans,high,SFR,0.2,250,30,0.4,150,50
+Business - Other,Loans,low,COMM,0.2,250,30,0.4,150,50
+Business - Other,Loans,low,CRE,0.2,250,30,0.4,150,50
+Business - Other,Loans,low,SFR,0.2,250,30,0.4,150,50
+Business - Other,Loans,mid,COMM,0.2,250,30,0.4,150,50
+Business - Other,Loans,mid,CRE,0.2,250,30,0.4,150,50
+Business - Other,Loans,mid,SFR,0.2,250,30,0.4,150,50
+Business - Other,Wealth,high,BKG,0.2,250,30,0.4,150,50
+Business - Other,Wealth,high,PM,0.2,250,30,0.4,150,50
+Business - Other,Wealth,low,BKG,0.2,250,30,0.4,150,50
+Business - Other,Wealth,low,PM,0.2,250,30,0.4,150,50
+Business - Other,Wealth,mid,BKG,0.2,250,30,0.4,150,50
+Business - Other,Wealth,mid,PM,0.2,250,30,0.4,150,50
+Person,Deposits,high,CD,0.2,250,30,0.4,150,50
+Person,Deposits,high,CHK,0.2,250,30,0.4,150,50
+Person,Deposits,high,SV,0.2,250,30,0.4,150,50
+Person,Deposits,low,CD,0.2,250,30,0.4,150,50
+Person,Deposits,low,CHK,0.2,250,30,0.4,150,50
+Person,Deposits,low,SV,0.2,250,30,0.4,150,50
+Person,Deposits,mid,CD,0.2,250,30,0.4,150,50
+Person,Deposits,mid,CHK,0.2,250,30,0.4,150,50
+Person,Deposits,mid,SV,0.2,250,30,0.4,150,50
+Person,Loans,high,PLN,0.2,250,30,0.4,150,50
+Person,Loans,high,PLOC,0.2,250,30,0.4,150,50
+Person,Loans,high,SFR,0.2,250,30,0.4,150,50
+Person,Loans,low,PLN,0.2,250,30,0.4,150,50
+Person,Loans,low,PLOC,0.2,250,30,0.4,150,50
+Person,Loans,low,SFR,0.2,250,30,0.4,150,50
+Person,Loans,mid,PLN,0.2,250,30,0.4,150,50
+Person,Loans,mid,PLOC,0.2,250,30,0.4,150,50
+Person,Loans,mid,SFR,0.2,250,30,0.4,150,50
+Person,Wealth,high,BKG,0.2,250,30,0.4,150,50
+Person,Wealth,high,PM,0.2,250,30,0.4,150,50
+Person,Wealth,low,BKG,0.2,250,30,0.4,150,50
+Person,Wealth,low,PM,0.2,250,30,0.4,150,50
+Person,Wealth,mid,BKG,0.2,250,30,0.4,150,50
+Person,Wealth,mid,PM,0.2,250,30,0.4,150,50
