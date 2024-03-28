@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from schema_config import data_dict
+import warnings
+
 
 #try:
 #    from dbio import connectors
@@ -93,7 +95,6 @@ def generate_schema(cobj, schema_config, save=True):
     if tables.empty:
         raise Exception("There are no tables available in the database")
 
-    print(tables.head(10))
     for table_name in tables.name.to_list():
         df = cobj.read(f"SELECT * FROM {table_name} LIMIT 1;")
         schema += generate_sql_create_command(df, table_name, schema_config=schema_config)
@@ -113,10 +114,14 @@ def mapper(df, table_name, schema_config):
     :param table_name: Name of the table that corresponds to the dataframe
     :schema_config: Configuration details for schema mapping.
     """
-    column_mapping = schema_config[table_name].get('column_mapping', None)
+    table_config = schema_config.get(table_name, None)
+    if not table_config:
+        warnings.warn(f"{table_name} schema config not found. returning original data frame...")
+        return df
+
+    column_mapping = table_config.get('column_mapping', None)
     if isinstance(column_mapping, dict):
         try:
-            print(column_mapping)
             df = df.rename(columns=column_mapping)
         except Exception as e:
             print(e)
