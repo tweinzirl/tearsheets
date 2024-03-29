@@ -75,7 +75,9 @@ if __name__ == "__main__":
         transactions_df['curr_bal'] = round(transactions_df.init_bal + transactions_df.tran_amt,2)
         transactions_df[outputs].to_csv('transaction.csv', mode='a', index=False, header=False)
 
+
     transactions_df = pd.read_csv("transaction.csv")
+    transactions_df.insert(0, "ID", np.arange(1, transactions_df.shape[0]+1, 1))
 
     # write database
     df_dict = {'accounts': accounts_df,
@@ -92,7 +94,7 @@ if __name__ == "__main__":
         df_dict[table_name] = mapper(df, table_name, schema_config=data_dict)
 
     result = m.write_db(cobj, df_dict)
-    
+
     sql = generate_schema(cobj=cobj, schema_config=data_dict, save=True)
     print("finished")
     # clients
