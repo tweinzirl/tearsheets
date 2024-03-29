@@ -798,9 +798,6 @@ def write_db(cobj, df_dict):
 
     return 'Done'
 
-def daterange(start_date, end_date):
-    for n in range(int((end_date - start_date).days)):
-        yield start_date + timedelta(n)
 
 def balance_func(row):
     choice = np.random.choice([1,-1,0], size=None, p=[row.incprob,row.decprob,1.0-row.incprob-row.decprob])
@@ -809,3 +806,61 @@ def balance_func(row):
             np.random.normal(row.decavg,row.decsd)
     if row.init_bal + choice * bal > 0: return round(choice * bal,2)
     return 0
+
+
+def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_config="config.csv", output_file='transaction.csv'):
+    """
+    Create daily transactions from start_date to end_date
+    :param accounts_df: accounts dataframe
+    :param clients_df: clients dataframe
+    :param: start_date: start date of transaction history should be in "YYYY-MM-DD" format
+    :param: end_date: end date of transaction history should be in "YYYY-MM-DD" format
+    """
+
+    def parse_date_input(date_string):
+        try:
+            year, month, day = map(int, date_string.split('-'))
+            return date(year, month, day)
+        except ValueError:
+            raise ValueError(f"Invalid date format for '{date_string}'. Please use YYYY-MM-DD.")
+
+    
+    def balance_func(row):
+        choice = np.random.choice([1,-1,0], size=None, p=[row.incprob,row.decprob,1.0-row.incprob-row.decprob])
+        #while choice != 0:
+        bal = np.random.normal(row.incavg,row.incsd) if choice == 1 else \
+                np.random.normal(row.decavg,row.decsd)
+        if row.init_bal + choice * bal > 0: return round(choice * bal,2)
+        return 0
+    
+    start_date = parse_date_input(start_date)
+    end_date = parse_date_input(end_date)
+    if end_date <= start_date:
+        raise ValueError("End date must be after start date.")
+
+    config_df = pd.read_csv(transaction_config)
+    tmp_acct_df = pd.merge(accounts_df, clients_df, how='inner', on="Client_ID")
+    transactions_df = pd.merge(config_df, tmp_acct_df,  how='inner', on="Client_Type,Account_Category,Wealth_Tier,Account_Type".split(","))
+
+    transactions_df['curr_bal'] = transactions_df.Init_Balance
+    transactions_df['init_bal'] = transactions_df.curr_bal
+    transactions_df['asof']     = 0
+    transactions_df['tran_amt'] = 0
+    outputs = "Account_Nr asof init_bal tran_amt curr_bal".split()
+    transactions_df[outputs].head(0).to_csv(output_file, index=False)
+
+
+    current_date = start_date
+    while current_date < end_date:
+        print(current_date)
+        transactions_df['asof'] = int(current_date.strftime('%Y%m%d')) 
+        transactions_df['init_bal'] = transactions_df.curr_bal
+        transactions_df['tran_amt'] = transactions_df.apply(balance_func, axis=1)
+        transactions_df['curr_bal'] = round(transactions_df.init_bal + transactions_df.tran_amt,2)
+        transactions_df[outputs].to_csv(output_file, mode='a', index=False, header=False)
+        current_date += timedelta(days=1)
+
+    transactions_df = pd.read_csv(output_file)
+
+    transactions_df.insert(0, "ID", np.arange(1, transactions_df.shape[0]+1, 1))
+    return transactions_df
