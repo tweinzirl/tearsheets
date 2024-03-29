@@ -157,7 +157,7 @@ def clients(n):
             # TODO create list of tiltes (esp. for high tier) and draw from those
             client_title[i] = fake.job()
             bday = fake.date_between(datetime.datetime(1945,1,1), pd.to_datetime('today').date())
-            birthday[i] = bday.strftime('%Y-%m-%d')
+            birthday[i] = bday.strftime('%m/%d')  # to use '%Y-%m-%d', rename to 'birthdate' and ensure consistency with HH logic
         elif client_type[i].find('Business') != -1:
             name[i] = fake.company()
             first_name[i] = np.nan
@@ -183,7 +183,7 @@ def clients(n):
 
         address[i] = fake.street_address()  # just street address, apply region later
         client_region[i] = np.random.choice(config.l_regions_sel)
-        client_start_date[i] = fake.date_between(datetime.datetime(2005,1,1), pd.to_datetime('today').date())
+        client_start_date[i] = fake.date_between(config.founding_date, pd.to_datetime('today').date())
 
     # initialize derived / empty fields
     client_cat, client_end_date, is_current = n*[None], n*[pd.NaT], n*[pd.NA]
@@ -824,6 +824,7 @@ if __name__ == '__main__':
     import setup_bank as m
     import config
     from importlib import reload
+    # reload(config); reload(m)
 
     # set random seed
     np.random.seed(42)
