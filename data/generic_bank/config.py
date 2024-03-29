@@ -13,7 +13,7 @@ assert n_regions <= len(l_regions), "nr of regions cannot exceed nr of region na
 l_regions_sel = l_regions[0:n_regions]
 
 # distribution of headcount per branch
-HEADCOUNT_AVG = 10
+HEADCOUNT_AVG = 14
 HEADCOUNT_STD = 2
 
 # breakdown of banker types per branch, must add to 1

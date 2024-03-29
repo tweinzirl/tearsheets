@@ -72,12 +72,9 @@ def assign_personnel_to_branches(df):
         config.HEADCOUNT_STD, size=df.shape[0]).astype(int)
 
     df = df.assign(Headcount = headcount_per_branch)
-    # TODO make `astype(int)`
-    df = df.assign(N_deposit_ofcr = lambda x: config.f_deposit_ofcr * x.Headcount)
-    df = df.assign(N_loan_ofcr = lambda x: config.f_loan_ofcr * x.Headcount)
-    df = df.assign(N_wealth_ofcr = lambda x: config.f_wealth_ofcr * x.Headcount)
-
-    df = df.round(0)
+    df = df.assign(N_deposit_ofcr = lambda x: round(config.f_deposit_ofcr * x.Headcount, 0).astype(int))
+    df = df.assign(N_loan_ofcr    = lambda x: round(config.f_loan_ofcr    * x.Headcount, 0).astype(int))
+    df = df.assign(N_wealth_ofcr  = lambda x: round(config.f_wealth_ofcr  * x.Headcount, 0).astype(int))
 
     # make dataframe of bankers at each branch
     banker_df = pd.DataFrame()
@@ -88,15 +85,33 @@ def assign_personnel_to_branches(df):
         br = row.Branch_Number
         rgn = row.Region_Name
         n = int(row.Headcount)
+        if n_dep + n_rm + n_wa != n: n_dep += n - (n_dep + n_rm + n_wa)  # if count incorrect, adjust
+        assert n_dep + n_rm + n_wa == n
 
         data_dict = {'Branch_Number': n*[br],
                      'Region': n*[rgn],
-                     'Banker_Type': n_dep*['Deposits'] + n_rm*['Loans'] + n_wa*['Wealth'],
+                     'Banker_Type': list(np.random.choice(n_dep*['Deposits'] + n_rm*['Loans'] + n_wa*['Wealth'], n, replace = False)),
                      'Banker_ID': range(1,n+1,1),
                      'Banker_Name': [fake.first_name() + ' ' + fake.last_name() for _ in range(n)],
+                     'Banker_Start_Date': n*pd.NaT,
+                     'Banker_End_Date': n*pd.NaT,
+                     'Banker_Is_Current': n*pd.NA
                      }
 
         row_df = pd.DataFrame(data_dict)
+
+        # banker start date
+        # first 5 bankers in branch joined at bank founding, 
+        # remaining bankers assigned date uniformly between date of last hire and min(date of last hire + 4yr, today - 1yr)
+        for idx, row in row_df.iterrows():
+            if idx in range(0,5):
+                row_df.at[idx, 'Banker_Start_Date'] = config.founding_date.date()
+            else: 
+                banker_start_dt_prev = row_df.at[idx-1, 'Banker_Start_Date']
+                row_df.at[idx, 'Banker_Start_Date'] = \
+                fake.date_between(banker_start_dt_prev, 
+                                  min(banker_start_dt_prev.replace(year=banker_start_dt_prev.year + 4, day=1), 
+                                      pd.to_datetime('today').date().replace(year= pd.to_datetime('today').date().year - 2, day=1)))
 
         banker_df = pd.concat([banker_df, row_df])
 
@@ -105,8 +120,10 @@ def assign_personnel_to_branches(df):
     # login
     banker_df['Login'] = banker_df['Banker_Name'].str.split(" ", n=1).str[0].str[0].str.lower() + \
                               banker_df['Banker_Name'].str.split(" ", n=1).str[1].str.lower().replace(" ", "")
+    # is_current
+    banker_df['Banker_Is_Current'] = np.where(pd.isna(banker_df['Banker_End_Date']), 1, 0).astype(int)
 
-    return df, banker_df
+    return df, banker_df.reset_index(drop=True)
 
 
 def clients(n):
@@ -908,7 +925,7 @@ if __name__ == '__main__':
 
 
     # todo:
-    # bankers table - (x) add login user
+    # bankers table - (x) add login user, (x) banker start/end dates, ensure banker start_dt consistent with account assignment dates
     # clients table - (x) add join date, (x) add 'wealth' flag (low, mid, high) tiers, (x) assign primary banker, (x) add NAICS and (x) is_Current
     #    fix birthday to be birthdate (might need to check consistency with HH)
     # accounts table - (x) add account open date (ensure CHK opened before Loan acct),
