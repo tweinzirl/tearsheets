@@ -12,13 +12,13 @@ from datetime import timezone, date, timedelta
 np.random.seed(42)
 m.fake.seed_instance(42)
 
-#try:
-#    from dbio import connectors
-#except ImportError: print("No module named 'dbio', so can't use write_db()")
+try:
+   from dbio import connectors
+except ImportError: 
+    print("No module named 'dbio', so can't use write_db()")
 
 db = './generic_bank.db'
-cobj = None
-#connectors.SQLite(database=db)
+cobj = connectors.SQLite(database=db)
 
 if __name__ == "__main__":
 
@@ -91,8 +91,8 @@ if __name__ == "__main__":
     for table_name, df in df_dict.items():
         df_dict[table_name] = mapper(df, table_name, schema_config=data_dict)
 
-    result = m.write_db(df_dict)
-
+    result = m.write_db(cobj, df_dict)
+    
     sql = generate_schema(cobj=cobj, schema_config=data_dict, save=True)
     print("finished")
     # clients
