@@ -1,13 +1,75 @@
+CREATE TABLE branches (
+    Region_Number integer,
+    Regional_Manager integer,
+    Region_Name varchar(128),
+    Branch_Number integer,
+    Branch_Manager integer,
+    Headcount integer,
+    N_deposit_ofcr real,
+    N_loan_ofcr real,
+    N_wealth_ofcr real
+);
+
+CREATE TABLE households (
+    Client_ID integer,
+    Client_Category varchar(128),
+    Client_Type varchar(128),
+    Product_Mix varchar(128),
+    Name varchar(128),
+    First_Name varchar(128),
+    Last_Name varchar(128),
+    NAICS_CD varchar(128),
+    SSN varchar(128),
+    Employer varchar(128),
+    Title varchar(128),
+    Street_Address varchar(128),
+    Region varchar(128),
+    Birthday varchar(128),
+    Start_Date varchar(128),
+    End_Date varchar(128),
+    Is_Current integer,
+    Wealth_Tier varchar(128),
+    Household_ID integer
+);
+
+CREATE TABLE account_fact (
+    Account_Nr varchar(128),
+    Date varchar(128),
+    Balance real,
+    Net_Change real
+);
+
 CREATE TABLE accounts (
     ID integer,
     Client_ID integer,
-    Product_Group varchar(128),
     Acct_Nbr varchar(128),
+    Product_Group varchar(128),
     Product_Type varchar(128),
     Balance real,
     Banker_ID integer,
     Primary_Banker integer,
     Start_Dt varchar(128),
+    End_Dt varchar(128),
+    Is_Current_x integer,
+    Status varchar(128),
+    Client_Category varchar(128),
+    Client_Type varchar(128),
+    Product_Mix varchar(128),
+    Name varchar(128),
+    First_Name varchar(128),
+    Last_Name varchar(128),
+    NAICS_CD varchar(128),
+    SSN varchar(128),
+    Employer varchar(128),
+    Title varchar(128),
+    Street_Address varchar(128),
+    Region varchar(128),
+    Birthday varchar(128),
+    Start_Date varchar(128),
+    End_Date varchar(128),
+    Is_Current_y integer,
+    Wealth_Tier varchar(128),
+    Household_ID integer,
     PRIMARY KEY (ID),
     FOREIGN KEY (Client_ID) REFERENCES clients(ID),
     FOREIGN KEY (Banker_ID) REFERENCES bankers(ID)
@@ -56,5 +118,16 @@ CREATE TABLE links (
     Link_Type varchar(128),
     PRIMARY KEY (ID),
     FOREIGN KEY (Household_ID) REFERENCES clients(HH_ID)
+);
+
+CREATE TABLE transactions (
+    ID integer,
+    Acct_Nbr varchar(128),
+    Prod_Dt integer,
+    Balance real,
+    Tran_Amt real,
+    After_Tran_Balance real,
+    PRIMARY KEY (ID),
+    FOREIGN KEY (Acct_Nbr) REFERENCES accounts(Acct_Nbr)
 );
 
