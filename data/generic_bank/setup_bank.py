@@ -446,6 +446,7 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
 
             # guardrails for min bal for mid/high tiers (left truncate observed distributions, to avoid large overlaps with prev tiers)
             # if bal < avg + 2sd of prev tier, then set to uniform between avg + 2sd and avg + 4sd of prev tier
+            # TODO move params to config
             prev_tiers = {'mid': 'low',
                           'high': 'mid'}
             if row_['Wealth_Tier'] in ['mid', 'high']:
@@ -458,20 +459,6 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
                 if bal_val_sel < prev_tier_bal_2sd_4sd[0]:
                     bal_val_sel = round(np.random.uniform(prev_tier_bal_2sd_4sd[0], prev_tier_bal_2sd_4sd[1]), 1)
 
-            # no individual / org split for banker assignment
-            # TODO for given client, choose bankers only from one region
-            banker_val_sel = np.random.choice(
-                list(l_bankers[row_['Account_Category']]),
-                size=1, p=f_bankers[row_['Account_Category']])
-            # assign primary banker to client relationship (by def: D banker is primary, if no DL then W banker)
-            if idx_ == 0 and row_['Account_Category'] == 'Deposits':
-                client_primary_banker_val_sel = True
-            elif idx_ == 0 and row_['Account_Category'] == 'Wealth':
-                client_primary_banker_val_sel = True
-            elif idx_ == 0:
-                client_primary_banker_val_sel = True
-            else:
-                client_primary_banker_val_sel = False
             # acct open date (assumes D is first in list)
             if idx_ == 0 and row_['Account_Category'] == 'Deposits':
                 ## if client has D, then client opened D acct on join date
@@ -490,6 +477,21 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
                 opendt_val_sel = fake.date_between(row['Start_Date'],
                                                    min(row['Start_Date'].replace(year=row['Start_Date'].year + 2, day=repl_day),
                                                        pd.to_datetime('today').date()))
+            # no individual / org split for banker assignment
+            # TODO for given client, choose bankers only from one region
+            # TODO select banker with start dt consistent with account open dates
+            banker_val_sel = np.random.choice(
+                list(l_bankers[row_['Account_Category']]),
+                size=1, p=f_bankers[row_['Account_Category']])
+            # assign primary banker to client relationship (by def: D banker is primary, if no DL then W banker)
+            if idx_ == 0 and row_['Account_Category'] == 'Deposits':
+                client_primary_banker_val_sel = True
+            elif idx_ == 0 and row_['Account_Category'] == 'Wealth':
+                client_primary_banker_val_sel = True
+            elif idx_ == 0:
+                client_primary_banker_val_sel = True
+            else:
+                client_primary_banker_val_sel = False
             # collect selections
             acct_val.append(acct_val_sel[0])
             bal_val.append(bal_val_sel)
