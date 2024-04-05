@@ -25,13 +25,7 @@ from schema_config import data_dict
 
 from datetime import timezone, date, timedelta
 
-#try:
-#    from dbio import connectors
-#except ImportError: print("No module named 'dbio', so can't use write_db()")
-
 fake = faker.Faker()
-db = './generic_bank.db'
-cobj = None #connectors.SQLite(database=db)
 
 def regions(n):
     '''Return n distinct regions and regional managers'''
@@ -811,24 +805,18 @@ def balance_timeseries(accounts_df, transactions_df, init_date=datetime.datetime
     return ts_df.reset_index()
 
 
-def write_db(df_dict, db='generic_bank.db'):
+def write_db(cobj, df_dict):
     '''
     Write SQLite database from dictionary of dataframes:
         - key = tablename
         - value = dataframe
     '''
 
-    cobj = connectors.SQLite(db)  # database connection
-    # write each dataframe to separate table
-
     for table_, df_ in df_dict.items():
         cobj.write(df_, table_, if_exists='replace', index=False)
 
     return 'Done'
 
-def daterange(start_date, end_date):
-    for n in range(int((end_date - start_date).days)):
-        yield start_date + timedelta(n)
 
 def balance_func(row):
     choice = np.random.choice([1,-1,0], size=None, p=[row.incprob,row.decprob,1.0-row.incprob-row.decprob])
@@ -839,111 +827,59 @@ def balance_func(row):
     return 0
 
 
-if __name__ == '__main__':
-    import setup_bank as m
-    import config
-    from importlib import reload
-    # reload(config); reload(m)
+def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_config="config.csv", output_file='transaction.csv'):
+    """
+    Create daily transactions from start_date to end_date
+    :param accounts_df: accounts dataframe
+    :param clients_df: clients dataframe
+    :param: start_date: start date of transaction history should be in "YYYY-MM-DD" format
+    :param: end_date: end date of transaction history should be in "YYYY-MM-DD" format
+    """
 
-    # set random seed
-    np.random.seed(42)
-    m.fake.seed_instance(42)
+    def parse_date_input(date_string):
+        try:
+            year, month, day = map(int, date_string.split('-'))
+            return date(year, month, day)
+        except ValueError:
+            raise ValueError(f"Invalid date format for '{date_string}'. Please use YYYY-MM-DD.")
 
-    # generate data
+    
+    def balance_func(row):
+        choice = np.random.choice([1,-1,0], size=None, p=[row.incprob,row.decprob,1.0-row.incprob-row.decprob])
+        #while choice != 0:
+        bal = np.random.normal(row.incavg,row.incsd) if choice == 1 else \
+                np.random.normal(row.decavg,row.decsd)
+        if row.init_bal + choice * bal > 0: return round(choice * bal,2)
+        return 0
+    
+    start_date = parse_date_input(start_date)
+    end_date = parse_date_input(end_date)
+    if end_date <= start_date:
+        raise ValueError("End date must be after start date.")
 
-    # assign branches in two passes:
-    # first pass: branches and regions
-    # second pass: headcount per branch
-    branches_df = m.regions_and_branches(config.n_regions, config.n_branches)
-    branches_df, bankers_df = m.assign_personnel_to_branches(branches_df)
-
-    # allocate clients
-    clients_df = m.clients(config.n_clients)
-
-    # group into households
-    households_df = m.households(clients_df)
-
-    # links
-    links_df = m.links(clients_df, households_df)
-
-    # accounts
-    accounts_df = m.assign_accounts_to_clients_and_bankers(clients_df, bankers_df)
-
-    # transactions
-    adults = m.adult_people(clients_df, links_df, households_df)
-    transactions_df = m.transactions(accounts_df, adults, households_df)
-
-    # account timeseries
-    ts_df = m.balance_timeseries(accounts_df, transactions_df, config.snapshot_date)
-
-    # validate output characteristics
-    # ?
-
-    # add Household ID to clients table
-    clients_df = clients_df.merge(households_df.filter(items=["Client_ID", "Household_ID"]), on="Client_ID")
-
-    # transactions
-    config_df = pd.read_csv("config.csv")
-    transactions_df = pd.merge(config_df, accounts_df,  how='inner', on="Client_Type,Account_Category,Wealth_Tier,Account_Type".split(","))
+    config_df = pd.read_csv(transaction_config)
+    tmp_acct_df = pd.merge(accounts_df, clients_df, how='inner', on="Client_ID")
+    transactions_df = pd.merge(config_df, tmp_acct_df,  how='inner', on="Client_Type,Account_Category,Wealth_Tier,Account_Type".split(","))
 
     transactions_df['curr_bal'] = transactions_df.Init_Balance
     transactions_df['init_bal'] = transactions_df.curr_bal
     transactions_df['asof']     = 0
     transactions_df['tran_amt'] = 0
     outputs = "Account_Nr asof init_bal tran_amt curr_bal".split()
-    transactions_df[outputs].head(0).to_csv("transaction.csv", index=False)
+    transactions_df[outputs].head(0).to_csv(output_file, index=False)
 
-    for dt in daterange(date(2023, 12, 1), date(2024, 1, 1)):
-        print(dt)
-        transactions_df['asof']     = int(str(dt).replace('-',''))
+
+    current_date = start_date
+    while current_date < end_date:
+        print(current_date)
+        transactions_df['asof'] = int(current_date.strftime('%Y%m%d')) 
         transactions_df['init_bal'] = transactions_df.curr_bal
         transactions_df['tran_amt'] = transactions_df.apply(balance_func, axis=1)
         transactions_df['curr_bal'] = round(transactions_df.init_bal + transactions_df.tran_amt,2)
-        transactions_df[outputs].to_csv('transaction.csv', mode='a', index=False, header=False)
+        transactions_df[outputs].to_csv(output_file, mode='a', index=False, header=False)
+        current_date += timedelta(days=1)
 
-    transactions_df = pd.read_csv("transaction.csv")
+    transactions_df = pd.read_csv(output_file)
 
-    # write database
-    df_dict = {'accounts': accounts_df,
-               'clients': clients_df,
-               'bankers': bankers_df,
-               'links': links_df,
-               #'transactions': transactions_df,
-               #'account_fact': ts_df,
-               #'branches': branches_df,
-               #'households': households_df,
-            }
-
-    for table_name, df in df_dict.items():
-        df_dict[table_name] = mapper(df, table_name, schema_config=data_dict)
-
-    result = m.write_db(df_dict)
-
-    sql = generate_schema(cobj=cobj, schema_config=data_dict, save=True)
-    print("finished")
-    # clients
-    # distribution of client join dates by month
-    # print(clients_df['Start_Date'].groupby(pd.to_datetime(clients_df['Start_Date']).dt.strftime('%Y-%m')).agg('count').to_string())
-
-
-    # todo:
-    # bankers table - (x) add login user
-    # clients table - (x) add join date, (x) add 'wealth' flag (low, mid, high) tiers, (x) assign primary banker, (x) add NAICS and (x) is_Current
-    #    fix birthday to be birthdate (might need to check consistency with HH)
-    # accounts table - (x) add account open date (ensure CHK opened before Loan acct),
-    #    (x) rename pdt_types (e.g. have pdt_code and pdt_label), add int rates,
-    #    get the wealth tiers working when assign balances,
-    #    assign bankers to accounts by region (i.e. client has only accounts in one region)
-    # x faker data - address, first name, last name, date of birth, banker names
-    # x counterparties - (only for consumer transactions)
-    # x transactions - oct through december
-      # - loans - infer original balance and make fixed payments, treat loc differently
-      # - counterparties - outbound transactions - add mart car, etc to names or manually set names and sample
-      # - counterparties - employers, fixed direct deposits
-      # - transfers between households in/out when hh_size > 1
-    # accounts timeseries table, show account number and balance over all dates, Oct 1 to Dec 31
-    # write db and evaluate size
-    # converge schema to current schema used by LLM
-    # host on hugging face
-    # add myportfolio queries with aggregates by region, banker, etc.
-    # add recommendations with logic based on generic bank data
+    transactions_df.insert(0, "ID", np.arange(1, transactions_df.shape[0]+1, 1))
+    return transactions_df

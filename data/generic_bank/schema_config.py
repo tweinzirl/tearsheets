@@ -26,9 +26,6 @@ data_dict = {
                 {"column": "HH_ID", "references_table": "links", "references_column": "Household_ID"},
             ]
         },
-        # add ID as primary key to the accounts table
-        # remove client_type, wealth_tier from accounts table
-        # primary_banker is at client level
         "accounts": {
             "column_mapping": {
                 "ID": "ID",
@@ -80,4 +77,18 @@ data_dict = {
                 {"column": "Household_ID", "references_table": "clients", "references_column": "HH_ID"},
             ]
         }, 
+        "transactions": {
+            "column_mapping": {
+                "ID": "ID",
+                "Account_Nr": "Acct_Nbr",
+                "asof": "Prod_Dt",
+                "init_bal" : "Balance",
+                "tran_amt": "Tran_Amt",
+                "curr_bal": "After_Tran_Balance"
+            },
+            "primary_key" : "ID",
+            "foreign_keys": [
+                {"column": "Acct_Nbr", "references_table": "accounts", "references_column": "Acct_Nbr"},
+            ]
+        },
     }

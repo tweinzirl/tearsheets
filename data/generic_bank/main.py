@@ -12,13 +12,13 @@ from datetime import timezone, date, timedelta
 np.random.seed(42)
 m.fake.seed_instance(42)
 
-#try:
-#    from dbio import connectors
-#except ImportError: print("No module named 'dbio', so can't use write_db()")
+try:
+   from dbio import connectors
+except ImportError: 
+    print("No module named 'dbio', so can't use write_db()")
 
 db = './generic_bank.db'
-cobj = None
-#connectors.SQLite(database=db)
+cobj = connectors.SQLite(database=db)
 
 if __name__ == "__main__":
 
@@ -56,26 +56,7 @@ if __name__ == "__main__":
     clients_df = clients_df.merge(households_df.filter(items=["Client_ID", "Household_ID"]), on="Client_ID")
 
     # transactions
-    config_df = pd.read_csv("config.csv")
-    accounts_df = pd.merge(accounts_df, clients_df, how='inner', on="Client_ID")
-    transactions_df = pd.merge(config_df, accounts_df,  how='inner', on="Client_Type,Account_Category,Wealth_Tier,Account_Type".split(","))
-
-    transactions_df['curr_bal'] = transactions_df.Init_Balance
-    transactions_df['init_bal'] = transactions_df.curr_bal
-    transactions_df['asof']     = 0
-    transactions_df['tran_amt'] = 0
-    outputs = "Account_Nr asof init_bal tran_amt curr_bal".split()
-    transactions_df[outputs].head(0).to_csv("transaction.csv", index=False)
-
-    for dt in m.daterange(date(2023, 12, 1), date(2024, 1, 1)):
-        print(dt)
-        transactions_df['asof']     = int(str(dt).replace('-',''))
-        transactions_df['init_bal'] = transactions_df.curr_bal
-        transactions_df['tran_amt'] = transactions_df.apply(m.balance_func, axis=1)
-        transactions_df['curr_bal'] = round(transactions_df.init_bal + transactions_df.tran_amt,2)
-        transactions_df[outputs].to_csv('transaction.csv', mode='a', index=False, header=False)
-
-    transactions_df = pd.read_csv("transaction.csv")
+    transactions_df = m.create_tranxs(accounts_df, clients_df, start_date="2023-12-01", end_date="2024-01-01", transaction_config="config.csv", output_file='transaction.csv')
 
     # write database
     df_dict = {'accounts': accounts_df,
@@ -91,7 +72,7 @@ if __name__ == "__main__":
     for table_name, df in df_dict.items():
         df_dict[table_name] = mapper(df, table_name, schema_config=data_dict)
 
-    result = m.write_db(df_dict)
+    result = m.write_db(cobj, df_dict)
 
     sql = generate_schema(cobj=cobj, schema_config=data_dict, save=True)
     print("finished")
@@ -101,7 +82,7 @@ if __name__ == "__main__":
 
 
     # todo:
-    # bankers table - (x) add login user
+    # bankers table - (x) add login user, ensure banker start / end dates consistente with account start / end dates
     # clients table - (x) add join date, (x) add 'wealth' flag (low, mid, high) tiers, (x) assign primary banker, (x) add NAICS and (x) is_Current
     #    fix birthday to be birthdate (might need to check consistency with HH)
     # accounts table - (x) add account open date (ensure CHK opened before Loan acct),
