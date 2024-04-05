@@ -13,7 +13,7 @@ assert n_regions <= len(l_regions), "nr of regions cannot exceed nr of region na
 l_regions_sel = l_regions[0:n_regions]
 
 # distribution of headcount per branch
-HEADCOUNT_AVG = 10
+HEADCOUNT_AVG = 14
 HEADCOUNT_STD = 2
 
 # breakdown of banker types per branch, must add to 1
@@ -31,7 +31,8 @@ assert (p_person + p_fin_business + p_nonfin_business + p_nonprofit) == 1
 
 # client product mix - currently no dependency on client type
 # for 'DL' will need to ensure D is CHK
-product_mix = 6*['D'] + 4*['DL'] + 2*['DLW'] + 0*['L'] + 0*['LW'] + 3*['W']
+#TODO switch to explicit probabilities instead of list with implicit probabilities
+product_mix = 2*['D'] + 4*['DL'] + 6*['DLW'] + 0*['L'] + 0*['LW'] + 2*['W'] + 2*['DW']
 
 # client wealth tiers
 p_wealth_tiers = {'low': 0.50, 

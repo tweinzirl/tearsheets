@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
 
     # todo:
-    # bankers table - (x) add login user
+    # bankers table - (x) add login user, ensure banker start / end dates consistente with account start / end dates
     # clients table - (x) add join date, (x) add 'wealth' flag (low, mid, high) tiers, (x) assign primary banker, (x) add NAICS and (x) is_Current
     #    fix birthday to be birthdate (might need to check consistency with HH)
     # accounts table - (x) add account open date (ensure CHK opened before Loan acct),

@@ -55,6 +55,9 @@ data_dict = {
                 "Banker_Type" : "Type",
                 "Branch_Number": "Branch_Nbr",
                 "Region" : "Region",
+                "Banker_Start_Date" : "Start_Dt",
+                "Banker_End_Date" : "End_Dt",
+                "Banker_Is_Current" : "Is_Current"
             },
             "primary_key" : "ID",
             "foreign_keys": [
