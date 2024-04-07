@@ -350,19 +350,21 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
     df = clients_df
 
     # prep frequencies for assigning bankers to accounts (given original branch headcounts)
-    l_bankers = dict()
-    for i in bankers_df.Banker_Type.unique():
-        l_bankers[i] = bankers_df.query(f'Banker_Type == "{i}"')['Banker_ID']
-    n_bankers = bankers_df[['Banker_Type', 'Banker_ID']].groupby(['Banker_Type']).count().to_dict()['Banker_ID']
-    f_bankers = dict()
-    for i in n_bankers:
-        f_bankers[i] = n_bankers[i]*[1 / n_bankers[i]]
+    ## disabling as currently not used (see banker logic assignment below)
+    # l_bankers = dict()
+    # for i in bankers_df.Banker_Type.unique():
+    #     l_bankers[i] = bankers_df.query(f'Banker_Type == "{i}"')['Banker_ID']
+    ## defining equal distro frequencies actually unnecessary for equal probabily distribution (which is default)
+    # n_bankers = bankers_df[['Banker_Type', 'Banker_ID']].groupby(['Banker_Type']).count().to_dict()['Banker_ID']
+    # f_bankers = dict()
+    # for i in n_bankers:
+    #     f_bankers[i] = n_bankers[i]*[1 / n_bankers[i]]
 
     # prep accounts data frame
     accounts_df = pd.DataFrame()
     for idx, row in df.iterrows():
         # for debugging
-        # if idx != 1227: continue
+        # if idx != 2: continue
         # print(row)
 
         # identify number of DLW accounts per client
@@ -375,12 +377,14 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
         cl = row.Client_ID
         clt = row.Client_Type
         clw = row.Wealth_Tier
+        clr = row.Region
         n = int(sum([n_D, n_L, n_W]))
 
         # prep df with one line per account
         data_dict = {'Client_ID': n*[cl],
                      'Client_Type': n*[clt],
                      'Wealth_Tier': n*[clw],
+                     'Region': n*[clr],
                      'Account_Nr': np.array(range(1,n+1,1), dtype=str),
                      # TODO pull DLW labels from config
                      'Account_Category': n_D*['Deposits'] + n_L*['Loans'] + n_W*['Wealth']
@@ -471,12 +475,14 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
                 opendt_val_sel = fake.date_between(row['Start_Date'],
                                                    min(row['Start_Date'].replace(year=row['Start_Date'].year + 2, day=repl_day),
                                                        pd.to_datetime('today').date()))
-            # no individual / org split for banker assignment
-            # TODO for given client, choose bankers only from one region
-            # TODO select banker with start dt consistent with account open dates
+            # assign banker to acct (no individual / org split)
+            # select banker (1) of the same acct type, (2) from the same region as client and (3) with start dt prior to account open date
+            # choose with equal probability
+            l_eligible_bankers = bankers_df.query(f"Banker_Type == '{row_['Account_Category']}' & \
+                Region == '{row_['Region']}' & Banker_Start_Date <= @opendt_val_sel")['Banker_ID']
             banker_val_sel = np.random.choice(
-                list(l_bankers[row_['Account_Category']]),
-                size=1, p=f_bankers[row_['Account_Category']])
+                list(l_eligible_bankers), 
+                size=1)
             # assign primary banker to client relationship (by def: D banker is primary, if no DL then W banker)
             if idx_ == 0 and row_['Account_Category'] == 'Deposits':
                 client_primary_banker_val_sel = True
