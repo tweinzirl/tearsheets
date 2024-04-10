@@ -1,6 +1,7 @@
 CREATE TABLE accounts (
     ID integer,
     Client_ID integer,
+    Region varchar(128),
     Acct_Nbr varchar(128),
     Product_Group varchar(128),
     Product_Type varchar(128),
@@ -46,6 +47,9 @@ CREATE TABLE bankers (
     Type varchar(128),
     ID integer,
     Name varchar(128),
+    Start_Dt varchar(128),
+    End_Dt varchar(128),
+    Is_Current integer,
     Login varchar(128),
     PRIMARY KEY (ID),
     FOREIGN KEY (Branch_Nbr) REFERENCES branches(Branch_Number)

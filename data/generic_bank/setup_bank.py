@@ -853,8 +853,12 @@ def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_con
     def balance_func(row):
         choice = np.random.choice([1,-1,0], size=None, p=[row.incprob,row.decprob,1.0-row.incprob-row.decprob])
         #while choice != 0:
-        bal = np.random.normal(row.incavg,row.incsd) if choice == 1 else \
-                np.random.normal(row.decavg,row.decsd)
+        inc_avg = row.incavg * 1000
+        inc_std = row.incsd * 1000
+        dec_avg = row.decavg * 1000
+        dec_std = row.decsd * 1000
+        bal = np.random.normal(inc_avg,inc_std) if choice == 1 else \
+                np.random.normal(dec_avg,dec_std)
         if row.init_bal + choice * bal > 0: return round(choice * bal,2)
         return 0
     

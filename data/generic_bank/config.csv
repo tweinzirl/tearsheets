@@ -28,7 +28,7 @@ Business - Other,Deposits,high,CHK,0.14,300,2500,0.21,200,2000
 Business - Other,Deposits,high,SV,0.06,500,4000,0.03,1500,8000
 Business - Other,Deposits,low,CD,0.02,0.1,0.5,0,40,30
 Business - Other,Deposits,low,CHK,0.06,20,70,0.1,10,50
-Business - Other,Deposits,low,SV,0.04,5,30,0.40.02,20,50
+Business - Other,Deposits,low,SV,0.04,5,30,0.02,20,50
 Business - Other,Deposits,mid,CD,0.02,5,20,0,300,400
 Business - Other,Deposits,mid,CHK,0.11,60,300,0.17,40,300
 Business - Other,Deposits,mid,SV,0.05,90,700,0.02,200,1000
@@ -50,7 +50,7 @@ Business - Other,Wealth,mid,PM,0.27,30,120,0.32,30,150
 Person,Deposits,high,CD,0.01,20,100,0,1000,1300
 Person,Deposits,high,CHK,0.07,150,1500,0.19,80,890
 Person,Deposits,high,SV,0.04,200,1200,0.02,500,2000
-Person,Deposits,low,CD,0.0`,0.5,5,0,40,30
+Person,Deposits,low,CD,0.0,0.5,5,0,40,30
 Person,Deposits,low,CHK,0.08,10,60,0.17,5,40
 Person,Deposits,low,SV,0.04,5,30,0.02,10,40
 Person,Deposits,mid,CD,0.02,1,20,0,200,200
