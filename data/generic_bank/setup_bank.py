@@ -893,3 +893,32 @@ def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_con
 
     transactions_df.insert(0, "ID", np.arange(1, transactions_df.shape[0]+1, 1))
     return transactions_df
+
+
+
+# Alex code:
+l_west_states= ['MT', 'WY', 'CO', 'NM', 'ID', 'UT', 'AZ', 'NV', 'WA', 'OR', 'CA', 'AK', 'HI']
+l_east_states = ['ME', 'NH', 'VT', 'MA', 'RI', 'CT', 'NY', 'NJ', 'PA', 'MD', 'DE', 'VA', 'NC', 'SC', 'GA', 'FL', 'DC']
+
+def get_state(region):
+    if region== 'West':
+        state = np.random.choice(l_west_states)
+    elif region== 'East':
+        state = np.random. choice(l_east_states)
+    else:
+        state=fake.state_abbr()
+    return state
+
+## West Region City, State, Zip, Lat/Lng
+for n in range (10):
+    state = get_state( 'West')
+    city_state_zip = fake.city() + ", " + state + " " + fake.postalcode_in_state(state)
+    lat_lng = str(fake.latitude()) + ", " +str(fake. longitude())
+    print (city_state_zip, " : ", lat_lng)
+    
+## East Region City, State, Zip, Lat/Lng
+for n in range (10):
+    state = get_state( 'West')
+    city_state_zip = fake.city() + ", " + state + " " + fake.postalcode_in_state(state)
+    lat_lng = str(fake.latitude()) + ", " +str(fake. longitude())
+    print (city_state_zip, " : ", lat_lng)
