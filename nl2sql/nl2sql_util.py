@@ -72,10 +72,4 @@ def sql_to_df(Message, return_sql=False, Verbose=False, Debug=False):
     Response = response.choices[0].message.content
     message_history.append({'role': 'assistant', 'content': Response})
 
-    # now need to query DB
-    df = Run_Query(Credentials=MYSQL_Credentials, Query=Response)
-
-    if return_sql:
-        return Response, df
-    else:
-        return df
+    return Response

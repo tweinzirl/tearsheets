@@ -36,6 +36,7 @@ CREATE TABLE clients (
     End_Dt varchar(128),
     Is_Current integer,
     Wealth_Tier varchar(128),
+    NAICS_CD_DESC varchar(128),
     HH_ID integer,
     PRIMARY KEY (ID),
     FOREIGN KEY (HH_ID) REFERENCES links(Household_ID)

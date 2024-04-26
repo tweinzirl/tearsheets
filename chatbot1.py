@@ -9,6 +9,7 @@ import tearsheet_utils as tshu
 import email_utils as emut
 from nl2sql import nl2sql_util
 from nl2viz import nl2viz_util
+import pandas as pd
 
 # system imports
 import os
@@ -34,6 +35,14 @@ from typing import Optional, List
 from pydantic.v1 import BaseModel, Field
 
 import gradio
+
+try:
+   from dbio import connectors
+except ImportError: 
+    print("No module named 'dbio', so can't use write_db()")
+
+db = './data/generic_bank/generic_bank.db'
+cobj = connectors.SQLite(database=db)
 
 # load vectordb
 vectordb = tshu.create_or_load_vectorstore('data/chroma',
@@ -187,8 +196,16 @@ def chat_with_db(english_input: str) -> dict:
     Output: The resulting dataframe is returned in HTML format.
     """
 
-    sql, df = nl2sql_util.sql_to_df(english_input, return_sql=True)
+    sql = nl2sql_util.sql_to_df(english_input, return_sql=True)
     print(sql)
+
+    # execute sql
+    try:
+        df = cobj.read(sql)
+    except Exception as e:
+        print(e)
+        df = pd.DataFrame()
+
     print(df)
     return df.to_html(index=None)
 

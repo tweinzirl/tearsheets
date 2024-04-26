@@ -9,7 +9,7 @@ data_dict = {
                 "First_Name": "First_Name", 
                 "Last_Name": "Last_Name", 
                 "NAICS_CD": "NAICS_CD",
-                # NAICS_CD_DESCRIPTION,
+                "NAICS_CD_DESC": "NAICS_CD_DESC",
                 "SSN": "SSN", 
                 "Employer": "Employer", 
                 "Title": "Title", 

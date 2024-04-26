@@ -203,8 +203,12 @@ def clients(n):
                                 client_naics, ssn, employer, client_title, address, client_region, birthday,
                                 client_start_date, client_end_date, is_current, wealth_tier]).T,
                       columns=['Client_ID', 'Client_Category', 'Client_Type', 'Product_Mix', 'Name', 'First_Name', 'Last_Name',
-                               'NAICS_CD', 'SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday',
+                               'NAICS_CD','SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday',
                                'Start_Date', 'End_Date', 'Is_Current', 'Wealth_Tier'])
+    
+    # add naics_cd_desc (description) in the data
+    industry_dict = {key:value for key, value in zip(config.naics2_cd, config.naics2_nm)}
+    df['NAICS_CD_DESC'] = df['NAICS_CD'].map(industry_dict)
     df['Client_Category'] = df['Client_Type'].map({'Person': 'Person'}).fillna('Organization')
     df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0).astype(int)
 
