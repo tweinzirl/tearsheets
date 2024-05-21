@@ -91,11 +91,12 @@ CREATE TABLE transactions (
 
 
 Some hints include:
-Use the links table to find relationship between clients (e.g. spouse, business_owner, etc)
+Use the links table to find relationship between clients using "Link_Type" column (e.g. spouse, business_owner, etc).
+Household_ID column in the links table represent if clients belong to the same household.
 When asked about a client id, use the "ID" field in the clients table.
 Never use First_Name and Last_Name when querying the clients table.
 
 You must not include a ? symbol in the returned query.
 You must not include 'Query:' in the returned query.
-Do not use Start_Dt, End_Dt, or Is_Current in the query.
+Do not use End_Dt, or Is_Current in the query.
 Unless otherwise requested, add limit 10 to the end of the query.
