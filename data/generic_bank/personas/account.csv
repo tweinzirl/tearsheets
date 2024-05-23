@@ -1,0 +1,15 @@
+,Name,ID,acct_nbr,Product_ID,Banker_ID,Status,Open_Dt,Close_Dt,Start_Dt,End_Dt,Is_Current,ID,Type,Name,Start_Dt,End_Dt,Is_Current,Banker_Name
+0,Robert King,29,1012345678,1,50,Open,2020-10-02,,2020-10-02,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Enos Curnick
+1,Robert King,30,1012345679,1,50,Open,2019-09-03,,2019-09-03,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Enos Curnick
+2,Aphrodite Greek,31,1012345680,1,38,Open,2019-09-03,,2019-09-03,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Egon Hymer
+3,Hanna Smith,33,1012345702,1,7,Open,2019-09-03,,2019-09-03,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Trevar Whitta
+4,Jared Livinglife,36,456789123,1,50,Open,2019-09-03,,2019-09-03,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Enos Curnick
+5,Mariann Avocado,39,501234567,1,6,Open,2019-09-03,,2019-09-03,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Ryun Gosnell
+6,Velvet Throat,41,1023456790,1,44,Open,2019-09-03,,2019-09-03,2099-12-31,1,1,Checking,Simple Checking,2022-09-15,2099-12-31,1,Vick Raden
+7,Hanna Smith,34,1012345703,5,7,Open,2019-09-03,,2019-09-03,2099-12-31,1,5,Saving,CD,2022-09-15,2099-12-31,1,Trevar Whitta
+8,Jared Livinglife,37,987654321,5,50,Open,2019-09-03,,2019-09-03,2099-12-31,1,5,Saving,CD,2022-09-15,2099-12-31,1,Enos Curnick
+9,Velvet Throat,40,1023456789,6,44,Open,2019-09-03,,2019-09-03,2099-12-31,1,6,Saving,Passbook Saving,2022-09-15,2099-12-31,1,Vick Raden
+10,Aphrodite Greek,32,1023456791,11,38,Open,2019-09-03,,2019-09-03,2099-12-31,1,11,Checking,Business Checking,2022-09-15,2099-12-31,1,Egon Hymer
+11,Jerry Smith,38,5012345678,11,41,Open,2019-09-03,,2019-09-03,2099-12-31,1,11,Checking,Business Checking,2022-09-15,2099-12-31,1,Sonni Minall
+12,Velvet Throat,42,1023456791,11,44,Open,2019-09-03,,2019-09-03,2099-12-31,1,11,Checking,Business Checking,2022-09-15,2099-12-31,1,Vick Raden
+13,Helen Troy,35,1029384856,12,52,Open,2019-09-03,,2019-09-03,2099-12-31,1,12,Checking,High-Yield Checking,2022-09-15,2099-12-31,1,Ignacio Bleesing

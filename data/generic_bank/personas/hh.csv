@@ -1,0 +1,9 @@
+,client_name,ID,Person_Org,Name,FirstName,LastName,NAICS_ID,Address_ID,Banker_ID,Open_Dt,Start_Dt,End_Dt,Is_Current
+0,Robert King,148,Person,Robert King,Robert,King,76,211,56,2005-02-20,2005-02-20,2099-12-31,1
+1,Hanna Smith,150,Person,Hanna Smith,Hanna,Smith,76,217,38,2005-02-20,2005-02-20,2099-12-31,1
+2,Jerry Smith,151,Person,Jerry Smith,Jerry,Smith,76,218,41,2005-02-20,2005-02-20,2099-12-31,1
+3,Mariann Avocado,152,Person,Mariann Avocado,Mariann,Avocado,76,219,6,2005-02-20,2005-02-20,2099-12-31,1
+4,Velvet Throat,153,Person,Velvet Throat,Velvet,Throat,76,220,44,2005-02-20,2005-02-20,2099-12-31,1
+5,Jared Livinglife,154,Person,Jared Livinglife,Jared,Livinglife,76,221,50,2005-02-20,2005-02-20,2099-12-31,1
+6,Aphrodite Greek,155,Person,Aphrodite Greek,Aphrodite,Greek,76,222,7,2005-02-20,2005-02-20,2099-12-31,1
+7,Helen Troy,156,Person,Helen Troy,Helen,Troy,76,223,52,2005-02-20,2005-02-20,2099-12-31,1
