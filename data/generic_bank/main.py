@@ -5,6 +5,7 @@ from importlib import reload
 from schema_mapper import (generate_schema, mapper)
 import numpy as np
 import pandas as pd
+from add_personas import get_personas_data
 
 from datetime import timezone, date, timedelta
 
@@ -58,12 +59,33 @@ if __name__ == "__main__":
     # transactions
     transactions_df = m.create_tranxs(accounts_df, clients_df, start_date="2023-12-01", end_date="2024-01-01", transaction_config="config.csv", output_file='transaction.csv')
 
+    # recommendations
+    recommendations_df = m.create_recommedations()
+
+    # add fake persona data to the tables:
+    # get latest clients IDs
+    max_client_id = clients_df["Client_ID"].max()
+    pc_df = get_personas_data("clients")
+    new_ids = range(max_client_id+1, max_client_id+pc_df.shape[0]+1)
+    persona_id_map = dict(zip(pc_df["Client_ID"].to_list(), new_ids))
+    pc_df.replace(persona_id_map, inplace=True)
+    clients_df = pd.concat([clients_df, pc_df], ignore_index=True)
+
+    for t in [['accounts',accounts_df], ['recommendations',recommendations_df]]:
+        df = get_personas_data(t[0])
+        df.replace(persona_id_map, inplace=True)
+        min_id = (1 if t[1]["ID"].empty else t[1]["ID"].max()+1)
+        df["ID"] = range(min_id,min_id+df.shape[0])
+        t[1] = pd.concat([t[1], df], ignore_index=True)
+            
+
     # write database
     df_dict = {'accounts': accounts_df,
                 'clients': clients_df,
                 'bankers': bankers_df,
                 'links': links_df,
                 'transactions': transactions_df,
+                'recommendations':recommendations_df,
                 #'account_fact': ts_df,
                 #'branches': branches_df,
                 #'households': households_df,

@@ -92,4 +92,18 @@ data_dict = {
                 {"column": "Acct_Nbr", "references_table": "accounts", "references_column": "Acct_Nbr"},
             ]
         },
+        "recommendations": {
+            "column_mapping": {
+                "ID": "ID",
+                "Client_ID": "Client_ID",
+                "Report_Name": "Report_Name",
+                "Report_ID" : "Report_ID",
+                "Is_Top_3": "Is_Top_3",
+                "Recommendation_Text": "Recommendation_Text"
+            },
+            "primary_key" : "ID",
+            "foreign_keys": [
+                {"column": "Client_ID", "references_table": "clients", "references_column": "Client_ID"},
+            ]
+        },
     }
