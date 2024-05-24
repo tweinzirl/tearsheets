@@ -1,21 +1,18 @@
-,CLIENT,REPORT_NAME,REPORT_ID,IS_TOP_3,RECOMMENDATION_TEXT
-0,Robert King,Overdraft,5,0,Robert King has a DD account 00234984750 that is overdrawn by $154 since 2023-11-28.
-1,Robert King,Low Balance Fee,15,0,"Robert King has total deposits of $10,355 and their deposit account(s) 00234984750 was (were) charged $45 in low balance fees in the last 3 months."
-2,Robert King,New Loans,16,1,Robert King funded a loan 0238434475 worth $0.8M on 2023-10-15.
-3,Robert King,Birthday,1,0,Robert King has a birthday on 1/1/2024 and will be 42 years old.
-4,Julia Harpman,New Loans,16,0,Julia Harpman funded a loan 0238477677 worth $1.5M on 2023-12-04.
-5,Julia Harpman,CD Not Rolled Over,31,1,Julia Harpman closed a CD 00839983842 and moved $0.7M outside of FRB on 2023-12-12.
-6,Julia Harpman,Birthday,1,0,Julia Harpman has a birthday on 12/29/2023 and will be 47 years old.
-7,Velvet Throat,Overdraft,5,0,Velvet Throat has a SV account 00483987723 that is overdrawn by $752 since 2023-12-07.
-8,Velvet Throat,Outgoing Car Loan Payment,46,0,"Velvet Throat has made 5 car payments in the last six months, each averaging $430, from account 00483987723 and may be a candidate for a PLOC. The most recent transaction occurred on 2023-12-13."
-9,Velvet Throat,Low Balance Fee,15,0,"Velvet Throat has total deposits of $7,205 and their deposit account(s) 00879982334 was (were) charged $45 in low balance fees in the last 3 months."
-10,Velvet Throat,CD Not Rolled Over,31,0,Velvet Throat closed a CD 0090363378 and moved $0.2M outside of FRB on 2023-11-18.
-11,Velvet Throat,Birthday,1,0,Velvet Throat has a birthday on 2/5/2024 and will be 27 years old.
-12,Jared Livinglife,Consumer Online Wires,42,1,"Jared Livinglife has sent 7 wires over the past month, but has never used consumer online wires. 002384675683"
-13,Jared Livinglife,Outgoing Car Loan Payment,46,0,"Jared Livinglife has made 2 car payments in the last six months, each averaging $1,325, from account 002384675683 and may be a candidate for a PLOC. The most recent transaction occurred on 2023-12-03"
-14,Jared Livinglife,New Loans,16,0,Jared Livinglife funded a loan 0238488557 worth $10.5M on 2023-09-06.
-15,Jared Livinglife,Birthday,1,0,Jared Livinglife has a birthday on 6/1/2024 and will be 47 years old.
-16,Hanna Smith,Low Balance Fee,15,0,"Hanna Smith has total deposits of $5,112 and their deposit account(s) 002349933737 was (were) charged $35 in low balance fees in the last 3 months."
-17,Hanna Smith,Birthday,1,0,Hanna Smith has a birthday on 12/20/2023 and will be 59 years old.
-18,Mariann Avocado,Overdraft,5,0,Mariann Avocado has a DD account 00234984874 that is overdrawn by $7 since 2023-12-08.
-19,Mariann Avocado,Birthday,1,0,Mariann Avocado has a birthday on 8/5/2024 and will be 70 years old.
+,Client_ID,Client,Report_Name,Report_ID,Is_Top_3,Recommendation_Text
+0,259,Robert King,Overdraft,5,0,Robert King has a DD account 00234984750 that is overdrawn by $154 since 2023-11-28.
+1,259,Robert King,Low Balance Fee,15,0,"Robert King has total deposits of $10,355 and their deposit account(s) 00234984750 was (were) charged $45 in low balance fees in the last 3 months."
+2,259,Robert King,New Loans,16,1,Robert King funded a loan 0238434475 worth $0.8M on 2023-10-15.
+3,259,Robert King,Birthday,1,0,Robert King has a birthday on 1/1/2024 and will be 42 years old.
+7,264,Velvet Throat,Overdraft,5,0,Velvet Throat has a SV account 00483987723 that is overdrawn by $752 since 2023-12-07.
+8,264,Velvet Throat,Outgoing Car Loan Payment,46,0,"Velvet Throat has made 5 car payments in the last six months, each averaging $430, from account 00483987723 and may be a candidate for a PLOC. The most recent transaction occurred on 2023-12-13."
+9,264,Velvet Throat,Low Balance Fee,15,0,"Velvet Throat has total deposits of $7,205 and their deposit account(s) 00879982334 was (were) charged $45 in low balance fees in the last 3 months."
+10,264,Velvet Throat,CD Not Rolled Over,31,0,Velvet Throat closed a CD 0090363378 and moved $0.2M outside of FRB on 2023-11-18.
+11,264,Velvet Throat,Birthday,1,0,Velvet Throat has a birthday on 2/5/2024 and will be 27 years old.
+12,265,Jared Livinglife,Consumer Online Wires,42,1,"Jared Livinglife has sent 7 wires over the past month, but has never used consumer online wires. 002384675683"
+13,265,Jared Livinglife,Outgoing Car Loan Payment,46,0,"Jared Livinglife has made 2 car payments in the last six months, each averaging $1,325, from account 002384675683 and may be a candidate for a PLOC. The most recent transaction occurred on 2023-12-03"
+14,265,Jared Livinglife,New Loans,16,0,Jared Livinglife funded a loan 0238488557 worth $10.5M on 2023-09-06.
+15,265,Jared Livinglife,Birthday,1,0,Jared Livinglife has a birthday on 6/1/2024 and will be 47 years old.
+16,261,Hanna Smith,Low Balance Fee,15,0,"Hanna Smith has total deposits of $5,112 and their deposit account(s) 002349933737 was (were) charged $35 in low balance fees in the last 3 months."
+17,261,Hanna Smith,Birthday,1,0,Hanna Smith has a birthday on 12/20/2023 and will be 59 years old.
+18,263,Mariann Avocado,Overdraft,5,0,Mariann Avocado has a DD account 00234984874 that is overdrawn by $7 since 2023-12-08.
+19,263,Mariann Avocado,Birthday,1,0,Mariann Avocado has a birthday on 8/5/2024 and will be 70 years old.
