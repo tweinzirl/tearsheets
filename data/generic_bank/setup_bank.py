@@ -156,7 +156,15 @@ def clients(n):
     for i in range(n):
         if client_type[i] == 'Person':
             # TODO use first_name / last_name generators for names to avoid odd entries
+            
             name[i] = fake.name()
+            
+            # edge cases because of post addition of personas
+            if name[i]=='Robert King':
+                name[i] = 'Robert Xing'
+            if name[i]=='Jerry Smith':
+                name[i] = 'Jerry Wangsum'
+
             first_name[i] = name[i].split(" ", 1)[0]
             last_name[i] = name[i].split(" ", 1)[1]
             client_naics[i] = pd.NA
@@ -884,7 +892,10 @@ def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_con
     transactions_df['init_bal'] = transactions_df.curr_bal
     transactions_df['asof']     = 0
     transactions_df['tran_amt'] = 0
-    outputs = "Account_Nr asof init_bal tran_amt curr_bal".split()
+    transactions_df['tran_type'] = None
+    transactions_df['tran_purpose'] = None
+    transactions_df['tran_desc'] = None
+    outputs = "Account_Nr asof init_bal tran_amt curr_bal tran_type tran_purpose tran_desc".split()
     transactions_df[outputs].head(0).to_csv(output_file, index=False)
 
 

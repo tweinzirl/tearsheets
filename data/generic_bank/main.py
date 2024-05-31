@@ -71,13 +71,28 @@ if __name__ == "__main__":
     pc_df.replace(persona_id_map, inplace=True)
     clients_df = pd.concat([clients_df, pc_df], ignore_index=True)
 
-    for t in [['accounts',accounts_df], ['recommendations',recommendations_df]]:
-        df = get_personas_data(t[0])
-        df.replace(persona_id_map, inplace=True)
-        min_id = (1 if t[1]["ID"].empty else t[1]["ID"].max()+1)
-        df["ID"] = range(min_id,min_id+df.shape[0])
-        t[1] = pd.concat([t[1], df], ignore_index=True)
+    # add personas data: accounts table
+    table_name = 'accounts'
+    df = get_personas_data(table_name)
+    df.replace(persona_id_map, inplace=True)
+    min_id = (1 if accounts_df["ID"].empty else accounts_df["ID"].max()+1)
+    df["ID"] = range(min_id,min_id+df.shape[0])
+    accounts_df = pd.concat([accounts_df, df], ignore_index=True)
+
+    # add personas data: recommendations
+    table_name = 'recommendations'
+    df = get_personas_data(table_name)
+    df.replace(persona_id_map, inplace=True)
+    min_id = (1 if recommendations_df["ID"].empty else recommendations_df["ID"].max()+1)
+    df["ID"] = range(min_id,min_id+df.shape[0])
+    recommendations_df = pd.concat([recommendations_df, df], ignore_index=True)
             
+    # add personas data: transactions
+    table_name = 'transactions'
+    df = get_personas_data(table_name)
+    min_id = (1 if transactions_df["ID"].empty else transactions_df["ID"].max()+1)
+    df["ID"] = range(min_id,min_id+df.shape[0])
+    transactions_df = pd.concat([transactions_df, df], ignore_index=True)
 
     # write database
     df_dict = {'accounts': accounts_df,

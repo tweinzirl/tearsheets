@@ -84,8 +84,12 @@ data_dict = {
                 "Account_Nr": "Acct_Nbr",
                 "asof": "Prod_Dt",
                 "init_bal" : "Balance",
-                "tran_amt": "Tran_Amt",
-                "curr_bal": "After_Tran_Balance"
+                "tran_amt": "Transaction_Amount",
+                "curr_bal": "After_Tran_Balance",
+                "tran_type": "Transaction_Type",
+                "tran_purpose": "Transaction_Purpose",
+                "tran_desc": "Transaction_Description",
+
             },
             "primary_key" : "ID",
             "foreign_keys": [

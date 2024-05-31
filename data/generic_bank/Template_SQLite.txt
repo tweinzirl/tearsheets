@@ -70,18 +70,21 @@ CREATE TABLE transactions (
     Acct_Nbr varchar(128),
     Prod_Dt integer,
     Balance real,
-    Tran_Amt real,
+    Transaction_Amount real,
     After_Tran_Balance real,
+    Transaction_Type varchar(128),
+    Transaction_Purpose varchar(128),
+    Transaction_Description varchar(128),
     PRIMARY KEY (ID),
     FOREIGN KEY (Acct_Nbr) REFERENCES accounts(Acct_Nbr)
 );
 
 CREATE TABLE recommendations (
-    ID varchar(128),
-    Client_ID varchar(128),
+    ID integer,
+    Client_ID integer,
     Report_Name varchar(128),
-    Report_ID varchar(128),
-    Is_Top_3 varchar(128),
+    Report_ID integer,
+    Is_Top_3 integer,
     Recommendation_Text varchar(128),
     PRIMARY KEY (ID),
     FOREIGN KEY (Client_ID) REFERENCES clients(Client_ID)
