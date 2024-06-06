@@ -123,6 +123,8 @@ def mapper(df, table_name, schema_config):
     if isinstance(column_mapping, dict):
         try:
             df = df.rename(columns=column_mapping)
+            select_columns = [v for _, v in column_mapping.items()]
+            df = df[select_columns]
         except Exception as e:
             print(e)
     return df

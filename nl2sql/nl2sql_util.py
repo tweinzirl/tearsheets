@@ -46,14 +46,14 @@ def sql_to_df(Message, return_sql=False, Verbose=False, Debug=False):
 
     message_history = Prepare_Message_Template(Template_Filename = Message_Template_Filename, Verbose=False, Debug=False)
 
-    Question_Emb = LOCAL_VDS.OpenAI_Get_Embedding(Text=Message, Verbose=Verbose)
-    rtn = LOCAL_VDS.Search_VDS(Question_Emb, Similarity_Func = 'Cosine', Top_n=3)
+    # Question_Emb = LOCAL_VDS.OpenAI_Get_Embedding(Text=Message, Verbose=Verbose)
+    # rtn = LOCAL_VDS.Search_VDS(Question_Emb, Similarity_Func = 'Cosine', Top_n=3)
 
-    N_Shot_Examples = {'Question':rtn[1], 'Query':rtn[2]}
-    # Append N Shot Examples to Message_History
-    for i in range(len(N_Shot_Examples['Question'])):
-        message_history.append({"role": "system", "name":"example_user", "content": N_Shot_Examples['Question'][i]})
-        message_history.append({"role": "system", "name":"example_assistant", "content": N_Shot_Examples['Query'][i]})
+    # N_Shot_Examples = {'Question':rtn[1], 'Query':rtn[2]}
+    # # Append N Shot Examples to Message_History
+    # for i in range(len(N_Shot_Examples['Question'])):
+    #     message_history.append({"role": "system", "name":"example_user", "content": N_Shot_Examples['Question'][i]})
+    #     message_history.append({"role": "system", "name":"example_assistant", "content": N_Shot_Examples['Query'][i]})
 
     # Append Message (e.g. question)
     message_history.append({"role": "user", "content": Message})
@@ -72,10 +72,4 @@ def sql_to_df(Message, return_sql=False, Verbose=False, Debug=False):
     Response = response.choices[0].message.content
     message_history.append({'role': 'assistant', 'content': Response})
 
-    # now need to query DB
-    df = Run_Query(Credentials=MYSQL_Credentials, Query=Response)
-
-    if return_sql:
-        return Response, df
-    else:
-        return df
+    return Response

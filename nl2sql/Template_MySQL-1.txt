@@ -1,7 +1,7 @@
-You are a MYSQL expert. 
+You are a sqlite expert. 
 Given the question below, create a syntactically correct sql query.
 Unless the user specifies a specific number of rows to obtain in the question,
-the query should return for at most 10 results using the LIMIT clause as per MYSQL. 
+the query should return for at most 10 results using the LIMIT clause as per sqlite. 
 
 You may order the results to return the most informative data in the database.
 You must query only the columns that are needed to answer the question. 
@@ -12,200 +12,91 @@ Pay attention to which column is in which table.
 
 Only use the following tables:
 
-create table naics
-(
-    ID integer primary key,
-    NAICS_CD integer not null,
-    DESCRIPTION varchar(128)
+CREATE TABLE accounts (
+    ID integer,
+    Client_ID integer,
+    Region varchar(128),
+    Acct_Nbr varchar(128),
+    Product_Group varchar(128),
+    Product_Type varchar(128),
+    Balance real,
+    Banker_ID integer,
+    Primary_Banker integer,
+    Start_Dt varchar(128),
+    End_Dt varchar(128),
+    Is_Current integer,
+    Status varchar(128),
+    PRIMARY KEY (ID),
+    FOREIGN KEY (Client_ID) REFERENCES clients(ID),
+    FOREIGN KEY (Banker_ID) REFERENCES bankers(ID)
 );
 
-create table product
-    (
-        ID integer primary key,
-        Type varchar(128) not null,
-        Name varchar(128) not null,
-        Start_Dt date not null,
-        End_Dt date not null,
-        Is_Current integer not null
+CREATE TABLE clients (
+    ID integer,
+    Person_Org varchar(128),
+    Type varchar(128),
+    Product_Mix varchar(128),
+    Name varchar(128),
+    First_Name varchar(128),
+    Last_Name varchar(128),
+    NAICS_CD varchar(128),
+    SSN varchar(128),
+    Employer varchar(128),
+    Title varchar(128),
+    Address varchar(128),
+    Region varchar(128),
+    Birthday varchar(128),
+    Start_Dt varchar(128),
+    End_Dt varchar(128),
+    Is_Current integer,
+    Wealth_Tier varchar(128),
+    HH_ID integer,
+    PRIMARY KEY (ID),
+    FOREIGN KEY (HH_ID) REFERENCES links(Household_ID)
 );
-create table banker
-    (
-        ID integer primary key,
-        Name varchar(128) not null,
-        FirstName  varchar(128) not null,
-        LastName varchar(128) not null,
-		Start_Dt date not null,
-		End_Dt date not null,
-        Is_Current integer not null
+
+CREATE TABLE bankers (
+    Branch_Nbr integer,
+    Region varchar(128),
+    Type varchar(128),
+    ID integer,
+    Name varchar(128),
+    Start_Dt varchar(128),
+    End_Dt varchar(128),
+    Is_Current integer,
+    Login varchar(128),
+    PRIMARY KEY (ID),
 );
 
-create table address
-    (
-        ID integer primary key,
-        Address varchar(128),
-        City varchar(128),
-        State varchar(128),
-        Zip varchar(128),
-        Start_Dt date not null,
-        End_Dt date not null,
-        Is_Current integer not null
-    );
+CREATE TABLE links (
+    ID integer,
+    Household_ID integer,
+    Client_1 integer,
+    Client_2 integer,
+    Link_Type varchar(128),
+    PRIMARY KEY (ID),
+    FOREIGN KEY (Household_ID) REFERENCES clients(HH_ID)
+);
 
-
-create table date
-    (
-        ID integer primary key,
-        Date date not null,
-        Julian_Dt integer not null,
-        Month integer not null,
-        Day integer not null,
-        Year integer not null,
-        Quarter integer not null
-    );
-
-create table account
-    (
-        ID integer primary key,
-        acct_nbr varchar(128) not null,
-        Product_ID integer not null,
-        Banker_ID integer not null,
-        Status varchar(128) not null,
-        Open_Dt date not null,
-        Close_Dt date,
-	    Start_Dt date not null,
-	    End_Dt date not null,
-        Is_Current integer not null,
-        FOREIGN KEY(Product_ID) REFERENCES Product(ID),
-        FOREIGN KEY(Banker_ID) REFERENCES banker(ID)   
-    );
-
-create table hh
-    (
-        ID integer PRIMARY KEY,
-        Person_Org varchar(128) not null,
-        Name varchar(128) not null,
-        FirstName varchar(128) ,
-        LastName varchar(128) ,
-        NAICS_ID integer ,
-        Address_ID integer not null,
-        Banker_ID integer not null,
-        Open_Dt date not null,
-        Start_Dt date not null,
-        End_Dt date not null,
-        Is_Current integer not null,
-        FOREIGN KEY(Address_ID) REFERENCES address(ID),
-        FOREIGN KEY(Banker_ID) REFERENCES banker(ID),
-        FOREIGN KEY(NAICS_ID) REFERENCES NAICS(ID)
-    );
- 
-create table employer
-    (
-        ID integer primary key,
-        Name varchar(128),
-        Address_ID integer not null,
-        Client_ID integer,
-        Industry varchar(128),
-        NAICS_ID integer,
-        Start_Dt date not null,
-        End_Dt date not null,
-        Is_Current integer not null,
-        FOREIGN KEY(Address_ID) REFERENCES address(ID),
-        Foreign key(NAICS_ID) References NAICS(ID) 
-    );
-
-CREATE TABLE client
-    (
-        ID integer PRIMARY KEY,
-        Client_ID integer not null,
-        HH_ID integer not null,
-        Person_Org varchar(128) not null,
-        Name varchar(128)not null,
-        FirstName varchar(128) ,
-        LastName varchar(128) ,
-        NAICS_ID integer,
-        SSN varchar(128),
-        Address_ID integer not null,
-        Banker_ID integer not null,
-        Employer_ID integer not null,
-        Title varchar(128),
-        New_Client_Dt date not null,
-        Start_Dt date not null,
-        End_Dt date not null,
-        Is_Current integer not null,
-        FOREIGN KEY(Address_ID) REFERENCES address(ID),
-        FOREIGN KEY(Banker_ID) REFERENCES banker(ID),
-        FOREIGN KEY(HH_ID) REFERENCES HH(ID),
-        FOREIGN KEY(Employer_ID) REFERENCES employer(ID),
-        Foreign key(NAICS_ID) References NAICS(ID) 
-    );
-
-create table relationship
-    (
-        ID integer primary key,
-        Account_ID integer not null,
-        Client_ID integer not null,
-        Relationship_Type varchar(128) not null,
-	    Start_Dt date not null,
-	    End_Dt date not null,
-        Is_Current integer not null,
-        FOREIGN KEY(Account_ID) REFERENCES account(ID),
-        FOREIGN KEY(Client_ID) REFERENCES client(ID)
-    );
-
-create table balance
-    (
-        ID integer primary key,
-        Account_ID integer not null,
-        Balance real not null,
-        Balance_Dt_Id integer not null,
-        FOREIGN KEY(Account_ID) REFERENCES account(ID),
-        FOREIGN KEY(Balance_Dt_Id) REFERENCES date(ID)
-        );
-
-create table transactions
-   (
-		ID integer primary key,
-		Date_ID integer not null,
-        Account_ID integer not null,
-		Transaction_Type varchar(128) not null,
-		Transfer_Acct_Nbr varchar(128),
-		ACH_Acct_Nbr varchar(128),
-		ACH_Rtg_Nbr varchar(128),
-		Transaction_Purpose varchar(128),
-        Transaction_Description varchar(256),
-		Transaction_Amount float,
-		Balance float,
-        FOREIGN KEY(Date_ID) REFERENCES date(ID),
-        FOREIGN KEY(Account_ID) REFERENCES account(id)
-        );
-
-create table recommendations 
-   (
-        CLIENT text primary key,
-        REPORT_NAME text,
-        REPORT_ID bigint(20),
-        IS_TOP_3 bigint(20),
-        RECOMMENDATION_TEXT text,
-        );
+CREATE TABLE transactions (
+    ID integer,
+    Acct_Nbr varchar(128),
+    Prod_Dt integer,
+    Balance real,
+    Tran_Amt real,
+    After_Tran_Balance real,
+    PRIMARY KEY (ID),
+    FOREIGN KEY (Acct_Nbr) REFERENCES accounts(Acct_Nbr)
+);
 
 
 Some hints include:
-Use the relationship table to associate clients with accounts or account with clients
-Unless specified in the question, insert "relationship.relationship_type ='Primary'" in the where
-clause when joining on the relationship table.
-When asked about account types, use the "type" field in the product table. 
-When asked about a client id, use the "id" field in the client table.
-When asked for the full or complete address, return "address, city, state and zip" from the address table.
-When asked about a clients who share a household, join the "client" table with "HH" table.
-When asked to return the count of accounts, 
-    use the following syntax for open accounts
-        sum(case when account.status = 'Open' then 1 else 0 end) 
-    use the following syntax for closed accounts
-        sum(case when account.status = 'Closed' then 1 else 0 end) 
-Never use First_Name and Last_Name when querying the client table.
-When asked about client recommendations or Top 3, use the "recommendations" table.
+Use the links table to find relationship between clients using "Link_Type" column (e.g. spouse, business_owner, etc).
+Household_ID column in the links table represent if clients belong to the same household.
+When asked about a client id, use the "ID" field in the clients table.
+Never use First_Name and Last_Name when querying the clients table.
 
 You must not include a ? symbol in the returned query.
 You must not include 'Query:' in the returned query.
-Do not use Start_Dt, End_Dt, or Is_Current in the query.
+Do not use End_Dt, or Is_Current in the query.
 Unless otherwise requested, add limit 10 to the end of the query.

@@ -1,0 +1,9 @@
+,ID,Client_ID,HH_ID,Client_Category,Name,First_Name,Last_Name,NAICS_CD,SSN,Address_ID,Banker_ID,Employer_ID,Title,New_Client_Dt,Start_Date,End_Date,Is_Current,Banker_Name,Employer
+0,263,263,152,Person,Mariann Avocado,Mariann,Avocado,76,345-67-8912,219,6,58,DEO,2004-12-03,2004-12-03,2099-12-31,1,Ryun Gosnell,Enertech
+1,266,266,155,Person,Aphrodite Greek,Aphrodite,Greek,76,567-89-1234,222,7,60,Owner,2004-12-03,2004-12-03,2099-12-31,1,Trevar Whitta,Aphrodite Greek Jewelry
+2,261,261,150,Person,Hanna Smith,Hanna,Smith,76,123-45-6789,217,38,56,Owner,2004-12-03,2004-12-03,2099-12-31,1,Egon Hymer,Hanna's French Press
+3,262,262,151,Person,Jerry Smith,Jerry,Smith,76,234-56-7891,218,41,57,Athelete,2004-12-03,2004-12-03,2099-12-31,1,Sonni Minall,Self-Employed
+4,264,264,153,Person,Velvet Throat,Velvet,Throat,76,456-78-9123,220,44,57,Muscian,2004-12-03,2004-12-03,2099-12-31,1,Vick Raden,Self-Employed
+5,265,265,154,Person,Jared Livinglife,Jared,Livinglife,76,789-12-3456,221,50,59,Retired,2004-12-03,2004-12-03,2099-12-31,1,Enos Curnick,Retired
+6,267,267,156,Person,Helen Troy,Helen,Troy,76,678-91-2345,223,52,57,Model,2004-12-03,2004-12-03,2099-12-31,1,Ignacio Bleesing,Self-Employed
+7,259,259,148,Person,Robert King,Robert,King,76,691-15-7878,211,56,55,CEO,2004-12-03,2004-12-03,2099-12-31,1,Random Guess,Hedge Fund A

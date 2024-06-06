@@ -1,9 +1,8 @@
 CREATE TABLE accounts (
     ID integer,
     Client_ID integer,
-    Region varchar(128),
-    Acct_Nbr varchar(128),
     Product_Group varchar(128),
+    Acct_Nbr varchar(128),
     Product_Type varchar(128),
     Balance real,
     Banker_ID integer,
@@ -26,6 +25,7 @@ CREATE TABLE clients (
     First_Name varchar(128),
     Last_Name varchar(128),
     NAICS_CD varchar(128),
+    NAICS_CD_DESC varchar(128),
     SSN varchar(128),
     Employer varchar(128),
     Title varchar(128),
@@ -42,15 +42,15 @@ CREATE TABLE clients (
 );
 
 CREATE TABLE bankers (
+    ID integer,
+    Login varchar(128),
+    Name varchar(128),
+    Type varchar(128),
     Branch_Nbr integer,
     Region varchar(128),
-    Type varchar(128),
-    ID integer,
-    Name varchar(128),
     Start_Dt varchar(128),
     End_Dt varchar(128),
     Is_Current integer,
-    Login varchar(128),
     PRIMARY KEY (ID),
     FOREIGN KEY (Branch_Nbr) REFERENCES branches(Branch_Number)
 );
@@ -70,9 +70,23 @@ CREATE TABLE transactions (
     Acct_Nbr varchar(128),
     Prod_Dt integer,
     Balance real,
-    Tran_Amt real,
+    Transaction_Amount real,
     After_Tran_Balance real,
+    Transaction_Type varchar(128),
+    Transaction_Purpose varchar(128),
+    Transaction_Description varchar(128),
     PRIMARY KEY (ID),
     FOREIGN KEY (Acct_Nbr) REFERENCES accounts(Acct_Nbr)
+);
+
+CREATE TABLE recommendations (
+    ID integer,
+    Client_ID integer,
+    Report_Name varchar(128),
+    Report_ID integer,
+    Is_Top_3 integer,
+    Recommendation_Text varchar(128),
+    PRIMARY KEY (ID),
+    FOREIGN KEY (Client_ID) REFERENCES clients(Client_ID)
 );
 

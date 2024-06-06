@@ -5,6 +5,7 @@ from importlib import reload
 from schema_mapper import (generate_schema, mapper)
 import numpy as np
 import pandas as pd
+from add_personas import get_personas_data
 
 from datetime import timezone, date, timedelta
 
@@ -58,12 +59,48 @@ if __name__ == "__main__":
     # transactions
     transactions_df = m.create_tranxs(accounts_df, clients_df, start_date="2023-12-01", end_date="2024-01-01", transaction_config="config.csv", output_file='transaction.csv')
 
+    # recommendations
+    recommendations_df = m.create_recommedations()
+
+    # add fake persona data to the tables:
+    # get latest clients IDs
+    max_client_id = clients_df["Client_ID"].max()
+    pc_df = get_personas_data("clients")
+    new_ids = range(max_client_id+1, max_client_id+pc_df.shape[0]+1)
+    persona_id_map = dict(zip(pc_df["Client_ID"].to_list(), new_ids))
+    pc_df.replace(persona_id_map, inplace=True)
+    clients_df = pd.concat([clients_df, pc_df], ignore_index=True)
+
+    # add personas data: accounts table
+    table_name = 'accounts'
+    df = get_personas_data(table_name)
+    df.replace(persona_id_map, inplace=True)
+    min_id = (1 if accounts_df["ID"].empty else accounts_df["ID"].max()+1)
+    df["ID"] = range(min_id,min_id+df.shape[0])
+    accounts_df = pd.concat([accounts_df, df], ignore_index=True)
+
+    # add personas data: recommendations
+    table_name = 'recommendations'
+    df = get_personas_data(table_name)
+    df.replace(persona_id_map, inplace=True)
+    min_id = (1 if recommendations_df["ID"].empty else recommendations_df["ID"].max()+1)
+    df["ID"] = range(min_id,min_id+df.shape[0])
+    recommendations_df = pd.concat([recommendations_df, df], ignore_index=True)
+            
+    # add personas data: transactions
+    table_name = 'transactions'
+    df = get_personas_data(table_name)
+    min_id = (1 if transactions_df["ID"].empty else transactions_df["ID"].max()+1)
+    df["ID"] = range(min_id,min_id+df.shape[0])
+    transactions_df = pd.concat([transactions_df, df], ignore_index=True)
+
     # write database
     df_dict = {'accounts': accounts_df,
                 'clients': clients_df,
                 'bankers': bankers_df,
                 'links': links_df,
                 'transactions': transactions_df,
+                'recommendations':recommendations_df,
                 #'account_fact': ts_df,
                 #'branches': branches_df,
                 #'households': households_df,

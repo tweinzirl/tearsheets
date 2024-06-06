@@ -156,7 +156,15 @@ def clients(n):
     for i in range(n):
         if client_type[i] == 'Person':
             # TODO use first_name / last_name generators for names to avoid odd entries
+            
             name[i] = fake.name()
+            
+            # edge cases because of post addition of personas
+            if name[i]=='Robert King':
+                name[i] = 'Robert Xing'
+            if name[i]=='Jerry Smith':
+                name[i] = 'Jerry Wangsum'
+
             first_name[i] = name[i].split(" ", 1)[0]
             last_name[i] = name[i].split(" ", 1)[1]
             client_naics[i] = pd.NA
@@ -203,8 +211,12 @@ def clients(n):
                                 client_naics, ssn, employer, client_title, address, client_region, birthday,
                                 client_start_date, client_end_date, is_current, wealth_tier]).T,
                       columns=['Client_ID', 'Client_Category', 'Client_Type', 'Product_Mix', 'Name', 'First_Name', 'Last_Name',
-                               'NAICS_CD', 'SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday',
+                               'NAICS_CD','SSN', 'Employer', 'Title', 'Street_Address', 'Region', 'Birthday',
                                'Start_Date', 'End_Date', 'Is_Current', 'Wealth_Tier'])
+    
+    # add naics_cd_desc (description) in the data
+    industry_dict = {key:value for key, value in zip(config.naics2_cd, config.naics2_nm)}
+    df['NAICS_CD_DESC'] = df['NAICS_CD'].map(industry_dict)
     df['Client_Category'] = df['Client_Type'].map({'Person': 'Person'}).fillna('Organization')
     df['Is_Current'] = np.where(pd.isna(df['End_Date']), 1, 0).astype(int)
 
@@ -528,6 +540,11 @@ def assign_accounts_to_clients_and_bankers(clients_df, bankers_df, debug = False
 
     return(accounts_df.reset_index(drop=True))
 
+def create_recommedations():
+    columns = ["ID", "Client_ID", "Report_Name", "Report_ID", "Is_Top_3", "Recommendation_Text"]
+    # need to add logic
+    df = pd.DataFrame(columns=columns)
+    return df
 
 def transactions(accounts_df, adults, households_df):
     '''
@@ -875,7 +892,10 @@ def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_con
     transactions_df['init_bal'] = transactions_df.curr_bal
     transactions_df['asof']     = 0
     transactions_df['tran_amt'] = 0
-    outputs = "Account_Nr asof init_bal tran_amt curr_bal".split()
+    transactions_df['tran_type'] = None
+    transactions_df['tran_purpose'] = None
+    transactions_df['tran_desc'] = None
+    outputs = "Account_Nr asof init_bal tran_amt curr_bal tran_type tran_purpose tran_desc".split()
     transactions_df[outputs].head(0).to_csv(output_file, index=False)
 
 
@@ -897,28 +917,28 @@ def create_tranxs(accounts_df, clients_df, start_date, end_date, transaction_con
 
 
 # Alex code:
-l_west_states= ['MT', 'WY', 'CO', 'NM', 'ID', 'UT', 'AZ', 'NV', 'WA', 'OR', 'CA', 'AK', 'HI']
-l_east_states = ['ME', 'NH', 'VT', 'MA', 'RI', 'CT', 'NY', 'NJ', 'PA', 'MD', 'DE', 'VA', 'NC', 'SC', 'GA', 'FL', 'DC']
+# l_west_states= ['MT', 'WY', 'CO', 'NM', 'ID', 'UT', 'AZ', 'NV', 'WA', 'OR', 'CA', 'AK', 'HI']
+# l_east_states = ['ME', 'NH', 'VT', 'MA', 'RI', 'CT', 'NY', 'NJ', 'PA', 'MD', 'DE', 'VA', 'NC', 'SC', 'GA', 'FL', 'DC']
 
-def get_state(region):
-    if region== 'West':
-        state = np.random.choice(l_west_states)
-    elif region== 'East':
-        state = np.random. choice(l_east_states)
-    else:
-        state=fake.state_abbr()
-    return state
+# def get_state(region):
+#     if region== 'West':
+#         state = np.random.choice(l_west_states)
+#     elif region== 'East':
+#         state = np.random. choice(l_east_states)
+#     else:
+#         state=fake.state_abbr()
+#     return state
 
-## West Region City, State, Zip, Lat/Lng
-for n in range (10):
-    state = get_state( 'West')
-    city_state_zip = fake.city() + ", " + state + " " + fake.postalcode_in_state(state)
-    lat_lng = str(fake.latitude()) + ", " +str(fake. longitude())
-    print (city_state_zip, " : ", lat_lng)
+# ## West Region City, State, Zip, Lat/Lng
+# for n in range (10):
+#     state = get_state( 'West')
+#     city_state_zip = fake.city() + ", " + state + " " + fake.postalcode_in_state(state)
+#     lat_lng = str(fake.latitude()) + ", " +str(fake. longitude())
+#     print (city_state_zip, " : ", lat_lng)
     
-## East Region City, State, Zip, Lat/Lng
-for n in range (10):
-    state = get_state( 'West')
-    city_state_zip = fake.city() + ", " + state + " " + fake.postalcode_in_state(state)
-    lat_lng = str(fake.latitude()) + ", " +str(fake. longitude())
-    print (city_state_zip, " : ", lat_lng)
+# ## East Region City, State, Zip, Lat/Lng
+# for n in range (10):
+#     state = get_state( 'West')
+#     city_state_zip = fake.city() + ", " + state + " " + fake.postalcode_in_state(state)
+#     lat_lng = str(fake.latitude()) + ", " +str(fake. longitude())
+#     print (city_state_zip, " : ", lat_lng)
